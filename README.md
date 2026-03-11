@@ -36,14 +36,16 @@ The series is divided into two parts:
 |---|-------|----------|--------|
 | 01 | [Adversarial Attacks on CNNs](#01-adversarial-attacks-on-cnns) | `01_adversarial_attacks_cnns/` | ✅ Available |
 | 02 | [Second-Order Attacks](#02-second-order-attacks) | `02_second_order_attacks/` | ✅ Available |
-| 03 | [Defenses for CNNs](#03-defenses-for-cnns) | `03_defenses_cnns/` | ✅ Available |
+| 03 | [Adversarial Attacks on Object Detection](#03-adversarial-attacks-on-object-detection) | `03_adversarial_object_detection/` | ✅ Available |
+| 04 | [Adversarial Reprogramming](#04-adversarial-reprogramming) | `04_adversarial_reprogramming/` | ✅ Available |
+| 05 | [Defenses for CNNs](#05-defenses-for-cnns) | `05_defenses_cnns/` | ✅ Available |
 
 ### Part 2 — AI Security in Large Language Models
 
 | # | Topic | Environment | Status |
 |---|-------|-------------|--------|
-| 04 | [Attacks on LLMs (Text-only)](#04-attacks-on-llms-text-only) | Docker + Local LLM | 🔜 Coming Soon |
-| 05 | [Attacks on Multimodal LLMs](#05-attacks-on-multimodal-llms) | Docker + Local LLM | 🔜 Coming Soon |
+| 06 | [Attacks on LLMs (Text-only)](#06-attacks-on-llms-text-only) | Docker + Local LLM | 🔜 Coming Soon |
+| 07 | [Attacks on Multimodal LLMs](#07-attacks-on-multimodal-llms) | Docker + Local LLM | 🔜 Coming Soon |
 
 ---
 
@@ -90,9 +92,58 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 
 ---
 
-### 03. Defenses for CNNs
+### 03. Adversarial Attacks on Object Detection
 
-> **Notebook**: `03_defenses_cnns/defenses_cnns.ipynb`
+> **Notebook**: `03_adversarial_object_detection/adversarial_object_detection.ipynb`
+
+Classification is just the start. Real-world AI systems rely on **object detectors** — deployed in surveillance cameras, autonomous vehicles, and drone systems. This module shows how white-box adversarial attacks can make *persons completely invisible* to YOLOv8.
+
+Two complementary attacks are demonstrated:
+
+- **Adversarial Patch** — a small optimised image region (≈100×100 px) placed on or near a person that suppresses all detection boxes. Analogous to a sticker or printed sign.
+- **Adversarial Clothing** — the patch texture is warped to fill the torso region of a detected person, simulating a printed t-shirt that renders the wearer invisible to surveillance cameras.
+
+**What you will learn:**
+- How object detectors (YOLOv8 / FPN architecture) are attacked at the feature-pyramid level
+- The white-box patch optimisation loop: gradient descent directly on the pixel values of the patch, backpropagating through the full YOLOv8 detection head
+- Why these attacks are physically deployable: the patch survives resizing, placement variation, and partial occlusion
+- Patch size sensitivity analysis: how much visual area is needed for a reliable attack
+- Transferability: a patch optimised on one image suppresses detections on unseen images
+
+**Key papers:**
+- Thys et al. (2019). *Fooling automated surveillance cameras* — [arXiv:1904.08653](https://arxiv.org/abs/1904.08653)
+- Xu et al. (2020). *Adversarial T-shirt Had Salient Texture* — [arXiv:1910.11099](https://arxiv.org/abs/1910.11099)
+- Brown et al. (2017). *Adversarial Patch* — [arXiv:1712.09665](https://arxiv.org/abs/1712.09665)
+
+**Requirements**: PyTorch, ultralytics, matplotlib — see `03_adversarial_object_detection/requirements.txt`
+
+---
+
+### 04. Adversarial Reprogramming
+
+> **Notebook**: `04_adversarial_reprogramming/adversarial_reprogramming.ipynb`
+
+A new class of adversarial attack that goes beyond misclassification — it **hijacks** a pre-trained neural network to perform a completely different task, without modifying any weights. Based on the paper by Elsayed, Goodfellow & Sohl-Dickstein (ICLR 2019).
+
+- **Adversarial Reprogramming** (Elsayed et al., 2019) — [arXiv:1806.11146](https://arxiv.org/abs/1806.11146)
+
+**What you will learn:**
+- The core concept: how a frozen ImageNet classifier can be repurposed to classify MNIST digits, count squares, or solve CIFAR-10
+- The mathematical formulation: the adversarial program P, the input mapping h_f (embedding + masking), and the output mapping h_g (label remapping)
+- How to implement and train an adversarial program from scratch using gradient-based optimisation
+- Why this attack works: deep networks encode surprisingly general-purpose representations
+- Security implications: compute theft via API hijacking, covert channels, and safety-critical model compromise
+- How adversarial reprogramming differs from classic evasion attacks and universal perturbations
+
+**Key result from the paper**: Inception V3 reprogrammed to classify MNIST digits achieves **97.3% accuracy** — nearly matching a dedicated MNIST model — without any weight updates.
+
+**Requirements**: numpy, matplotlib, scikit-learn — lightweight, no GPU needed.
+
+---
+
+### 05. Defenses for CNNs
+
+> **Notebook**: `05_defenses_cnns/defenses_cnns.ipynb`
 
 Attacks are only half the story. This module covers four families of defenses — from quick preprocessing heuristics to mathematically certified guarantees — and explains precisely *why* certifying robustness is fundamentally hard.
 
@@ -108,7 +159,7 @@ Attacks are only half the story. This module covers four families of defenses �
 - Why the L∞ threat model (FGSM/PGD) is easier to certify deterministically than the L₂ threat model (C&W)
 - How to read and interpret robustness benchmarks (RobustBench)
 
-**Requirements**: PyTorch, torchvision, scipy, matplotlib — see `03_defenses_cnns/requirements.txt`
+**Requirements**: PyTorch, torchvision, scipy, matplotlib — see `05_defenses_cnns/requirements.txt`
 
 ---
 
@@ -116,7 +167,7 @@ Attacks are only half the story. This module covers four families of defenses �
 
 Modern LLMs introduce a completely new attack surface. Unlike image classifiers, LLMs are prompted with natural language — and that same flexibility that makes them powerful also makes them exploitable.
 
-### 04. Attacks on LLMs (Text-only)
+### 06. Attacks on LLMs (Text-only)
 
 > 🔜 *Coming Soon* — Docker environment included
 
@@ -137,14 +188,14 @@ Each attack module ships with a **Docker container running a local LLM configure
 
 ```bash
 # Launch the LLM attack environment (coming soon)
-docker pull elcronos/aisecurity-llm-04
-docker run -p 8080:8080 elcronos/aisecurity-llm-04
+docker pull elcronos/aisecurity-llm-05
+docker run -p 8080:8080 elcronos/aisecurity-llm-05
 # Open http://localhost:8080 — try to break the chatbot!
 ```
 
 ---
 
-### 05. Attacks on Multimodal LLMs
+### 07. Attacks on Multimodal LLMs
 
 > 🔜 *Coming Soon* — Docker environment included
 
@@ -164,8 +215,8 @@ Similar to Module 04 but the chatbot also accepts images. Challenges include:
 
 ```bash
 # Launch the multimodal attack environment (coming soon)
-docker pull elcronos/aisecurity-llm-05
-docker run -p 8080:8080 elcronos/aisecurity-llm-05
+docker pull elcronos/aisecurity-llm-06
+docker run -p 8080:8080 elcronos/aisecurity-llm-06
 ```
 
 ---
@@ -196,9 +247,23 @@ pip install -r requirements.txt
 jupyter notebook second_order_attacks.ipynb
 ```
 
-**Module 03 — Defenses for CNNs**
+**Module 03 — Adversarial Attacks on Object Detection**
 ```bash
-cd AISecurity/03_defenses_cnns
+cd AISecurity/03_adversarial_object_detection
+pip install -r requirements.txt
+jupyter notebook adversarial_object_detection.ipynb
+```
+
+**Module 04 — Adversarial Reprogramming**
+```bash
+cd AISecurity/04_adversarial_reprogramming
+pip install numpy matplotlib scikit-learn jupyter
+jupyter notebook adversarial_reprogramming.ipynb
+```
+
+**Module 05 — Defenses for CNNs**
+```bash
+cd AISecurity/05_defenses_cnns
 pip install -r requirements.txt
 jupyter notebook defenses_cnns.ipynb
 ```
@@ -222,13 +287,19 @@ AISecurity/
 ├── 02_second_order_attacks/
 │   ├── second_order_attacks.ipynb
 │   └── requirements.txt
-├── 03_defenses_cnns/
+├── 03_adversarial_object_detection/
+│   ├── adversarial_object_detection.ipynb
+│   └── requirements.txt
+├── 04_adversarial_reprogramming/
+│   ├── adversarial_reprogramming.ipynb
+│   └── *.png                         # generated plots
+├── 05_defenses_cnns/
 │   ├── defenses_cnns.ipynb
 │   └── requirements.txt
-├── 04_llm_attacks_text/              # coming soon
+├── 06_llm_attacks_text/              # coming soon
 │   ├── docker-compose.yml
 │   └── challenges/
-└── 05_llm_attacks_multimodal/        # coming soon
+└── 07_llm_attacks_multimodal/        # coming soon
     ├── docker-compose.yml
     └── challenges/
 ```
@@ -250,8 +321,12 @@ AISecurity/
 3. Madry et al. (2017). *Towards Deep Learning Models Resistant to Adversarial Attacks*. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
 4. Carlini & Wagner (2017). *Evaluating the Robustness of Neural Networks*. [arXiv:1608.04644](https://arxiv.org/abs/1608.04644)
 5. Cohen et al. (2019). *Certified Adversarial Robustness via Randomized Smoothing*. [arXiv:1902.02918](https://arxiv.org/abs/1902.02918)
-6. Perez & Ribeiro (2022). *Ignore Previous Prompt: Attack Techniques For Language Models*. [arXiv:2211.09527](https://arxiv.org/abs/2211.09527)
-7. Greshake et al. (2023). *Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
+6. Brown et al. (2017). *Adversarial Patch*. [arXiv:1712.09665](https://arxiv.org/abs/1712.09665)
+7. Thys et al. (2019). *Fooling automated surveillance cameras: adversarial patches to attack person detection*. [arXiv:1904.08653](https://arxiv.org/abs/1904.08653)
+8. Xu et al. (2020). *Adversarial T-shirt Had Salient Texture and Adaptive Patterns for Clothes*. [arXiv:1910.11099](https://arxiv.org/abs/1910.11099)
+9. Elsayed, Goodfellow & Sohl-Dickstein (2019). *Adversarial Reprogramming of Neural Networks*. [arXiv:1806.11146](https://arxiv.org/abs/1806.11146)
+10. Perez & Ribeiro (2022). *Ignore Previous Prompt: Attack Techniques For Language Models*. [arXiv:2211.09527](https://arxiv.org/abs/2211.09527)
+11. Greshake et al. (2023). *Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
 
 ---
 
