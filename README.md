@@ -36,7 +36,7 @@ The series is divided into two parts:
 |---|-------|----------|--------|
 | 01 | [Adversarial Attacks on CNNs](#01-adversarial-attacks-on-cnns) | `01_adversarial_attacks_cnns/` | ✅ Available |
 | 02 | [Second-Order Attacks](#02-second-order-attacks) | `02_second_order_attacks/` | ✅ Available |
-| 03 | [Defenses for CNNs](#03-defenses-for-cnns) | `03_defenses_cnns/` | 🔜 Coming Soon |
+| 03 | [Defenses for CNNs](#03-defenses-for-cnns) | `03_defenses_cnns/` | ✅ Available |
 
 ### Part 2 — AI Security in Large Language Models
 
@@ -92,16 +92,23 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 
 ### 03. Defenses for CNNs
 
-> 🔜 *Coming Soon*
+> **Notebook**: `03_defenses_cnns/defenses_cnns.ipynb`
 
-Attacks are only half the story. This module covers the main families of certified and empirical defenses.
+Attacks are only half the story. This module covers four families of defenses — from quick preprocessing heuristics to mathematically certified guarantees — and explains precisely *why* certifying robustness is fundamentally hard.
 
-**Planned topics:**
-- **Adversarial Training** (Madry et al.) — the strongest known empirical defense
-- **Input preprocessing**: JPEG compression, spatial smoothing, feature squeezing
-- **Certified defenses**: Randomized Smoothing (Cohen et al., 2019) — provable robustness guarantees
-- **Detection methods**: identifying adversarial inputs before they reach the classifier
-- Robustness benchmarks: RobustBench, AutoAttack
+- **Input preprocessing** (JPEG compression, Gaussian smoothing, bit-depth reduction) — zero-retraining defenses that destroy high-frequency adversarial noise; evaluated against adaptive attackers to show their limitations
+- **Adversarial Training** (FGSM-AT) — the minimax training objective; demonstrated by fine-tuning a frozen ResNet50 head on a 2-class subset (tench vs parachute) with side-by-side standard vs adversarial training comparison
+- **Randomized Smoothing** (Cohen et al., 2019) — Monte Carlo smoothed classifier with probabilistic L₂ certified radius $r = \sigma \cdot \Phi^{-1}(p_A)$; accuracy vs radius tradeoff sweep across σ ∈ {0.12, 0.25, 0.50}
+- **Why L₂ is harder to certify than L∞** — geometric intuition: L∞ balls stay axis-aligned through linear layers (IBP is tight), while L₂ balls become ellipsoids (IBP is a loose over-approximation); illustrated with a 3-panel figure
+
+**What you will learn:**
+- Why heuristic preprocessing defenses fail against *adaptive* attackers who craft examples through the defense
+- How the adversarial training minimax objective formally trades clean accuracy for empirical robustness
+- How randomized smoothing converts any classifier into one with a provable L₂ robustness certificate
+- Why the L∞ threat model (FGSM/PGD) is easier to certify deterministically than the L₂ threat model (C&W)
+- How to read and interpret robustness benchmarks (RobustBench)
+
+**Requirements**: PyTorch, torchvision, scipy, matplotlib — see `03_defenses_cnns/requirements.txt`
 
 ---
 
@@ -189,6 +196,13 @@ pip install -r requirements.txt
 jupyter notebook second_order_attacks.ipynb
 ```
 
+**Module 03 — Defenses for CNNs**
+```bash
+cd AISecurity/03_defenses_cnns
+pip install -r requirements.txt
+jupyter notebook defenses_cnns.ipynb
+```
+
 > **Apple Silicon (M1/M2/M3/M4)**: PyTorch will automatically use the MPS GPU backend for a 5–15× speedup over CPU. Requires PyTorch ≥ 1.12 and macOS ≥ 12.3.
 > C&W and L-BFGS are optimization-based attacks — running on MPS is strongly recommended over CPU.
 
@@ -208,7 +222,9 @@ AISecurity/
 ├── 02_second_order_attacks/
 │   ├── second_order_attacks.ipynb
 │   └── requirements.txt
-├── 03_defenses_cnns/                 # coming soon
+├── 03_defenses_cnns/
+│   ├── defenses_cnns.ipynb
+│   └── requirements.txt
 ├── 04_llm_attacks_text/              # coming soon
 │   ├── docker-compose.yml
 │   └── challenges/
