@@ -35,7 +35,7 @@ The series is divided into two parts:
 | # | Topic | Notebook | Status |
 |---|-------|----------|--------|
 | 01 | [Adversarial Attacks on CNNs](#01-adversarial-attacks-on-cnns) | `01_adversarial_attacks_cnns/` | ✅ Available |
-| 02 | [Second-Order Attacks](#02-second-order-attacks) | `02_second_order_attacks/` | 🔜 Coming Soon |
+| 02 | [Second-Order Attacks](#02-second-order-attacks) | `02_second_order_attacks/` | ✅ Available |
 | 03 | [Defenses for CNNs](#03-defenses-for-cnns) | `03_defenses_cnns/` | 🔜 Coming Soon |
 
 ### Part 2 — AI Security in Large Language Models
@@ -70,15 +70,23 @@ An introduction to adversarial attacks on image classifiers using ResNet50 and I
 
 ### 02. Second-Order Attacks
 
-> 🔜 *Coming Soon*
+> **Notebook**: `02_second_order_attacks/second_order_attacks.ipynb`
 
-First-order attacks like FGSM and PGD follow the gradient sign. Second-order attacks use curvature information (the Hessian) to find more precise and transferable adversarial examples.
+First-order attacks like FGSM and PGD follow the gradient sign. Second-order attacks use **curvature information** (the Hessian) to find more precise adversarial examples with smaller, less perceptible perturbations.
 
-**Planned topics:**
-- Newton's method applied to adversarial attacks
-- The **C&W attack** (Carlini & Wagner, 2017) — optimization-based, L2-bounded
-- **NewtonFool** and curvature-aware perturbations
-- Comparison: FGSM vs PGD vs C&W — effectiveness, perceptibility, transferability
+- **L-BFGS** (Szegedy et al., 2013) — the original adversarial attack; quasi-Newton optimization with logit-margin loss
+- **C&W L2** (Carlini & Wagner, 2017) — minimises L2 distortion directly; Adam optimizer with adaptive loss; gold standard for robustness evaluation
+
+**What you will learn:**
+- Why gradient steps are suboptimal and how curvature-aware updates (Newton's method, L-BFGS) find smaller perturbations
+- The logit-margin objective and why it avoids the gradient saturation that breaks cross-entropy at high-confidence predictions
+- Why C&W was specifically designed to defeat gradient-masking defenses
+- Quantitative comparison — accuracy, L2 distortion, computation time — across FGSM, PGD-40, L-BFGS, and C&W on a 5-class ImageNet subset
+- Per-class accuracy breakdown: grouped bar charts, line trends, and a full attacks × classes heatmap
+
+**Key insight**: Second-order attacks achieve **lower L2 distortion** by concentrating perturbations on the most sensitive pixels. But because they are unconstrained in L∞, individual pixels can change by more than ε — a fundamentally different threat model from FGSM/PGD.
+
+**Requirements**: PyTorch, torchvision, scipy, matplotlib — see `02_second_order_attacks/requirements.txt`
 
 ---
 
@@ -161,17 +169,28 @@ docker run -p 8080:8080 elcronos/aisecurity-llm-05
 
 ```bash
 git clone https://github.com/elcronos/AISecurity.git
-cd AISecurity/01_adversarial_attacks_cnns
 
-# Create a virtual environment
+# Create a virtual environment (do this once)
 python -m venv venv && source venv/bin/activate   # macOS/Linux
 # python -m venv venv && venv\Scripts\activate     # Windows
+```
 
+**Module 01 — Adversarial Attacks on CNNs**
+```bash
+cd AISecurity/01_adversarial_attacks_cnns
 pip install -r requirements.txt
 jupyter notebook adversarial_attacks_cnn.ipynb
 ```
 
+**Module 02 — Second-Order Attacks**
+```bash
+cd AISecurity/02_second_order_attacks
+pip install -r requirements.txt
+jupyter notebook second_order_attacks.ipynb
+```
+
 > **Apple Silicon (M1/M2/M3/M4)**: PyTorch will automatically use the MPS GPU backend for a 5–15× speedup over CPU. Requires PyTorch ≥ 1.12 and macOS ≥ 12.3.
+> C&W and L-BFGS are optimization-based attacks — running on MPS is strongly recommended over CPU.
 
 ### Part 2 — LLM Docker Environments
 
@@ -186,7 +205,9 @@ AISecurity/
 ├── 01_adversarial_attacks_cnns/
 │   ├── adversarial_attacks_cnn.ipynb
 │   └── requirements.txt
-├── 02_second_order_attacks/          # coming soon
+├── 02_second_order_attacks/
+│   ├── second_order_attacks.ipynb
+│   └── requirements.txt
 ├── 03_defenses_cnns/                 # coming soon
 ├── 04_llm_attacks_text/              # coming soon
 │   ├── docker-compose.yml
@@ -208,12 +229,13 @@ AISecurity/
 
 ## References
 
-1. Goodfellow et al. (2014). *Explaining and Harnessing Adversarial Examples*. [arXiv:1412.6572](https://arxiv.org/abs/1412.6572)
-2. Madry et al. (2017). *Towards Deep Learning Models Resistant to Adversarial Attacks*. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
-3. Carlini & Wagner (2017). *Evaluating the Robustness of Neural Networks*. [arXiv:1608.04644](https://arxiv.org/abs/1608.04644)
-4. Cohen et al. (2019). *Certified Adversarial Robustness via Randomized Smoothing*. [arXiv:1902.02918](https://arxiv.org/abs/1902.02918)
-5. Perez & Ribeiro (2022). *Ignore Previous Prompt: Attack Techniques For Language Models*. [arXiv:2211.09527](https://arxiv.org/abs/2211.09527)
-6. Greshake et al. (2023). *Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
+1. Szegedy et al. (2013). *Intriguing Properties of Neural Networks*. [arXiv:1312.6199](https://arxiv.org/abs/1312.6199)
+2. Goodfellow et al. (2014). *Explaining and Harnessing Adversarial Examples*. [arXiv:1412.6572](https://arxiv.org/abs/1412.6572)
+3. Madry et al. (2017). *Towards Deep Learning Models Resistant to Adversarial Attacks*. [arXiv:1706.06083](https://arxiv.org/abs/1706.06083)
+4. Carlini & Wagner (2017). *Evaluating the Robustness of Neural Networks*. [arXiv:1608.04644](https://arxiv.org/abs/1608.04644)
+5. Cohen et al. (2019). *Certified Adversarial Robustness via Randomized Smoothing*. [arXiv:1902.02918](https://arxiv.org/abs/1902.02918)
+6. Perez & Ribeiro (2022). *Ignore Previous Prompt: Attack Techniques For Language Models*. [arXiv:2211.09527](https://arxiv.org/abs/2211.09527)
+7. Greshake et al. (2023). *Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
 
 ---
 
