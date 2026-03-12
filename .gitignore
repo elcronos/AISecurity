@@ -3,10 +3,13 @@
 *.pth
 *.ckpt
 
-# Generated images
+# Generated images (exclude repo assets)
 *.png
 *.jpg
 *.jpeg
+!assets/*.png
+!assets/*.jpg
+!assets/*.jpeg
 
 # Jupyter checkpoints
 .ipynb_checkpoints/

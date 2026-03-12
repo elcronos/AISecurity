@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/AISecurity.png" alt="AI Security" width="600"/>
+
 # AI Security
 
 ### A Educational Series by [Camilo Pestana, PhD](https://github.com/elcronos)
