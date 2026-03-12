@@ -4,7 +4,7 @@
 
 # AI Security
 
-### A Educational Series by [Camilo Pestana, PhD](https://github.com/elcronos)
+### An Educational Series by [Camilo Pestana, PhD](https://github.com/elcronos)
 
 *Understanding how AI systems can be attacked — and how to defend them.*
 
@@ -105,16 +105,16 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 
 > **Notebook**: `03_adversarial_object_detection/adversarial_object_detection.ipynb`
 
-Classification is just the start. Real-world AI systems rely on **object detectors** — deployed in surveillance cameras, autonomous vehicles, and drone systems. This module shows how white-box adversarial attacks can make *persons completely invisible* to YOLOv8.
+Classification is just the start. Real-world AI systems rely on **object detectors** — deployed in surveillance cameras, autonomous vehicles, and drone systems. This module shows how white-box adversarial attacks can make *persons completely invisible* to YOLOv5.
 
 Two complementary attacks are demonstrated:
 
-- **Adversarial Patch** — a small optimised image region (≈100×100 px) placed on or near a person that suppresses all detection boxes. Analogous to a sticker or printed sign.
-- **Adversarial Clothing** — the patch texture is warped to fill the torso region of a detected person, simulating a printed t-shirt that renders the wearer invisible to surveillance cameras.
+- **Adversarial Patch** — a small optimised image region placed on or near a person that suppresses all detection boxes. Analogous to a sticker or printed sign.
+- **Adversarial Clothing** — the patch texture is resized to fill the torso region of a detected person, simulating a printed t-shirt that renders the wearer invisible to surveillance cameras.
 
 **What you will learn:**
-- How object detectors (YOLOv8 / FPN architecture) are attacked at the feature-pyramid level
-- The white-box patch optimisation loop: gradient descent directly on the pixel values of the patch, backpropagating through the full YOLOv8 detection head
+- How object detectors (YOLOv5su / anchor-free head) are attacked at the feature-pyramid level
+- The white-box patch optimisation loop: gradient descent directly on the pixel values of the patch, backpropagating through the full detection head
 - Why these attacks are physically deployable: the patch survives resizing, placement variation, and partial occlusion
 - Patch size sensitivity analysis: how much visual area is needed for a reliable attack
 - Transferability: a patch optimised on one image suppresses detections on unseen images
@@ -246,7 +246,7 @@ Multimodal LLMs (GPT-4V, LLaVA, Gemini) accept both images and text, opening an 
 - **OCR-based injection**: hiding text instructions in image content (screenshots, documents)
 
 **Interactive Docker environment:**
-Similar to Module 04 but the chatbot also accepts images. Challenges include:
+Similar to Module 07 but the chatbot also accepts images. Challenges include:
 - Crafting images that contain hidden adversarial instructions
 - Bypassing image-content moderation
 - Multi-turn attack strategies combining text and image inputs
@@ -336,8 +336,7 @@ AISecurity/
 │   ├── adversarial_object_detection.ipynb
 │   └── requirements.txt
 ├── 04_adversarial_reprogramming/
-│   ├── adversarial_reprogramming.ipynb
-│   └── *.png                         # generated plots
+│   └── adversarial_reprogramming.ipynb
 ├── 05_defenses_cnns/
 │   ├── defenses_cnns.ipynb
 │   └── requirements.txt
