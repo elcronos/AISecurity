@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NovaTech KnowledgeBase Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #080d1a;
+      --surface: #0f1729;
+      --surface2:#131e30;
+      --surface3:#182236;
+      --border:  #1a2740;
+      --primary: #00c8ff;
+      --text:    #d4e0f0;
+      --muted:   #5a7090;
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --amber:   #f59e0b;
+      --purple:  #a855f7;
+      --blue:    #3b82f6;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,.018) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Login Screen ──────────────────────────────────────────────────── */
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+    }
+
+    #loginScreen.hidden { display: none; }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 44px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .login-logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary), #0055cc);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo-icon svg { width: 22px; height: 22px; }
+
+    .login-logo-text { line-height: 1.2; }
+    .login-logo-text .brand { font-size: 1rem; font-weight: 700; color: #fff; }
+    .login-logo-text .sub   { font-size: .72rem; color: var(--muted); }
+
+    .login-card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .login-card .subtitle {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+
+    .form-group label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: .88rem;
+      padding: 11px 14px;
+      transition: border-color .2s;
+    }
+
+    .form-control:focus { outline: none; border-color: var(--primary); }
+
+    .form-control.error { border-color: var(--red); }
+
+    .login-error {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 7px;
+      color: var(--red);
+      font-size: .82rem;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .login-error.visible { display: block; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+      font-size: .88rem;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: background .2s, opacity .2s;
+      margin-top: 4px;
+    }
+
+    .btn-primary:hover    { background: #00a8d4; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── App Shell ─────────────────────────────────────────────────────── */
+    #appShell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    #appShell.hidden { display: none; }
+
+    /* ── Header ────────────────────────────────────────────────────────── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-logo {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--primary), #0055cc);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-logo svg { width: 18px; height: 18px; }
+
+    .header-title {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .header-subtitle {
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px 5px 5px;
+    }
+
+    .user-avatar {
+      width: 26px;
+      height: 26px;
+      background: linear-gradient(135deg, var(--primary), #0055cc);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .7rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .user-name {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    .back-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .78rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color .2s;
+    }
+
+    .back-link:hover { color: var(--primary); }
+
+    /* ── Layout ────────────────────────────────────────────────────────── */
+    .app-body {
+      display: flex;
+      flex: 1;
+    }
+
+    /* ── Sidebar Nav ───────────────────────────────────────────────────── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-section-label {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 4px 12px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(0,200,255,.1); color: var(--primary); }
+
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--primary);
+      color: #000;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    /* ── Main Content ──────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ── Section panels ────────────────────────────────────────────────── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .section-subtitle {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* ── Stat cards ────────────────────────────────────────────────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    /* ── Buttons ───────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background .2s, opacity .2s;
+    }
+
+    .btn svg { width: 14px; height: 14px; }
+
+    .btn-add {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .btn-add:hover { background: #00a8d4; }
+
+    .btn-danger {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.25);
+      color: var(--red);
+    }
+
+    .btn-danger:hover { background: rgba(239,68,68,.22); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+    /* ── Table ─────────────────────────────────────────────────────────── */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .table-count {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 11px 16px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    tbody td {
+      padding: 13px 16px;
+      font-size: .82rem;
+      vertical-align: middle;
+    }
+
+    .td-id {
+      font-family: monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .td-title {
+      font-weight: 600;
+      color: var(--text);
+      max-width: 220px;
+    }
+
+    .td-title-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 220px;
+    }
+
+    .td-date {
+      color: var(--muted);
+      font-size: .75rem;
+      white-space: nowrap;
+    }
+
+    .td-size {
+      color: var(--muted);
+      font-size: .78rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .td-actions { text-align: right; white-space: nowrap; }
+
+    /* ── Source badges ─────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-system {
+      background: rgba(90,112,144,.18);
+      color: #8ba4c0;
+      border: 1px solid rgba(90,112,144,.3);
+    }
+
+    .badge-upload {
+      background: rgba(59,130,246,.12);
+      color: #60a5fa;
+      border: 1px solid rgba(59,130,246,.25);
+    }
+
+    .badge-url {
+      background: rgba(168,85,247,.12);
+      color: #c084fc;
+      border: 1px solid rgba(168,85,247,.25);
+    }
+
+    /* ── Delete icon button ────────────────────────────────────────────── */
+    .icon-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .icon-btn svg { width: 14px; height: 14px; }
+    .icon-btn:hover { background: rgba(239,68,68,.12); color: var(--red); border-color: rgba(239,68,68,.3); }
+
+    /* ── Empty state ───────────────────────────────────────────────────── */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      color: var(--muted);
+      margin-bottom: 16px;
+      opacity: .4;
+    }
+
+    .empty-state p {
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    /* ── Activity feed ─────────────────────────────────────────────────── */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: var(--surface2); }
+
+    .activity-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .dot-add    { background: var(--green); }
+    .dot-delete { background: var(--red); }
+
+    .activity-text {
+      font-size: .82rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .activity-text strong { color: #fff; }
+
+    .activity-time {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Settings section ──────────────────────────────────────────────── */
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .settings-card h3 {
+      font-size: .88rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-label {
+      font-size: .82rem;
+      color: var(--text);
+    }
+
+    .settings-value {
+      font-size: .82rem;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    .settings-badge-on {
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.25);
+      color: var(--green);
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 5px;
+    }
+
+    /* ── Loading spinner ───────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0,200,255,.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-row td {
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    /* ── Toast notifications ───────────────────────────────────────────── */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: .82rem;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+      animation: slideUp .25s ease;
+    }
+
+    .toast.success { border-color: rgba(34,197,94,.3); }
+    .toast.error   { border-color: rgba(239,68,68,.3); }
+
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .toast.success .toast-dot { background: var(--green); }
+    .toast.error   .toast-dot { background: var(--red); }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    /* ── Modals ────────────────────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,13,26,.8);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.hidden { display: none; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: popIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+
+    .modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      transition: color .15s;
+    }
+
+    .modal-close:hover { color: var(--text); }
+    .modal-close svg { width: 18px; height: 18px; }
+
+    .modal-body { padding: 20px 24px 24px; }
+
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .modal-footer {
+      padding: 0 24px 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* ── Confirm modal ─────────────────────────────────────────────────── */
+    .confirm-modal {
+      max-width: 400px;
+    }
+
+    .confirm-body {
+      padding: 20px 24px;
+      text-align: center;
+    }
+
+    .confirm-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .confirm-icon svg { width: 24px; height: 24px; color: var(--red); }
+
+    .confirm-body h3 {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .confirm-body p {
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .confirm-footer {
+      padding: 0 24px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .confirm-footer .btn { flex: 1; justify-content: center; }
+
+    /* ── Misc ──────────────────────────────────────────────────────────── */
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+    }
+
+    .form-hint {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .field-error {
+      font-size: .72rem;
+      color: var(--red);
+      margin-top: 5px;
+      display: none;
+    }
+
+    .field-error.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ── Login Screen ───────────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M3 5v5c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+          <path d="M3 10v5c0 1.66 4.03 3 9 3s9-1.34 9-3v-5"/>
+          <path d="M3 15v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4"/>
+        </svg>
+      </div>
+      <div class="login-logo-text">
+        <div class="brand">NovaTech</div>
+        <div class="sub">KnowledgeBase Admin</div>
+      </div>
+    </div>
+    <h2>Sign in</h2>
+    <p class="subtitle">Access is restricted to authorised administrators.</p>
+
+    <div class="login-error" id="loginError"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" class="form-control" id="loginUsername" autocomplete="username" placeholder="admin" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-control" id="loginPassword" autocomplete="current-password" placeholder="••••••••••••" />
+      </div>
+      <button type="submit" class="btn-primary" id="loginBtn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── App Shell ──────────────────────────────────────────────────────── -->
+<div id="appShell" class="hidden">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M3 5v5c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+          <path d="M3 10v5c0 1.66 4.03 3 9 3s9-1.34 9-3v-5"/>
+          <path d="M3 15v4c0 1.66 4.03 3 9 3s9-1.34 9-3v-4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">KnowledgeBase Admin</div>
+        <div class="header-subtitle">NovaTech SmartSearch — Document Management</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <a class="back-link" href="/challenge/3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back to Chat
+      </a>
+      <div class="user-chip">
+        <div class="user-avatar" id="headerAvatar">A</div>
+        <span class="user-name" id="headerUsername">admin</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- Sidebar Nav -->
+    <nav class="sidebar">
+      <div class="nav-section-label">Management</div>
+      <button class="nav-item active" data-section="documents" onclick="showSection('documents')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Documents
+        <span class="nav-badge" id="navDocBadge">—</span>
+      </button>
+      <button class="nav-item" data-section="activity" onclick="showSection('activity')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Activity
+      </button>
+
+      <div class="nav-section-label">System</div>
+      <button class="nav-item" data-section="settings" onclick="showSection('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M4.93 4.93A10 10 0 0 1 19.07 19.07"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        </svg>
+        Settings
+      </button>
+    </nav>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- Documents section -->
+      <section class="section active" id="section-documents">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Knowledge Base Documents</div>
+            <div class="section-subtitle">Manage documents indexed by NovaTech SmartSearch</div>
+          </div>
+          <button class="btn btn-add" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Document
+          </button>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Documents</div>
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-sub">in knowledge base</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">System Docs</div>
+            <div class="stat-value" id="statSystem">—</div>
+            <div class="stat-sub">seed / built-in</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">User Added</div>
+            <div class="stat-value" id="statUser">—</div>
+            <div class="stat-sub">uploads &amp; URLs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Size</div>
+            <div class="stat-value" id="statSize">—</div>
+            <div class="stat-sub">characters indexed</div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <div class="table-toolbar">
+            <span class="table-title">All Documents</span>
+            <span class="table-count" id="tableCount">Loading…</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Source</th>
+                <th>Added By</th>
+                <th>Date Added</th>
+                <th style="text-align:right">Size</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="docsTableBody">
+              <tr class="loading-row">
+                <td colspan="7"><span class="spinner"></span> Loading documents…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Activity section -->
+      <section class="section" id="section-activity">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Activity Log</div>
+            <div class="section-subtitle">Recent document additions and deletions</div>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <div class="activity-list" id="activityList">
+            <div style="padding:48px;text-align:center;color:var(--muted);font-size:.85rem">
+              No activity recorded yet.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings section -->
+      <section class="section" id="section-settings">
+        <div class="section-header">
+          <div>
+            <div class="section-title">System Settings</div>
+            <div class="section-subtitle">NovaTech SmartSearch configuration (read-only)</div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Retrieval Engine</h3>
+          <div class="settings-row">
+            <span class="settings-label">Algorithm</span>
+            <span class="settings-value">BM25 (Okapi)</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Top-K results per query</span>
+            <span class="settings-value">3</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Tokenizer</span>
+            <span class="settings-value">Regex whitespace + punctuation</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Index persistence</span>
+            <span class="settings-value">/data/documents.json</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Status</span>
+            <span class="settings-badge-on">ACTIVE</span>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Authentication</h3>
+          <div class="settings-row">
+            <span class="settings-label">Auth method</span>
+            <span class="settings-value">JWT (HS256)</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Token expiry</span>
+            <span class="settings-value">8 hours</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Admin username</span>
+            <span class="settings-value">admin</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ── Add Document Modal ──────────────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Document</span>
+      <button class="modal-close" onclick="closeAddModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('paste')">Paste Text</button>
+        <button class="tab-btn" onclick="switchTab('url')">Fetch URL</button>
+      </div>
+
+      <!-- Paste Text tab -->
+      <div class="tab-panel active" id="tab-paste">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" class="form-control" id="pasteTitle" placeholder="e.g. Q4 Financial Report 2024" />
+          <div class="field-error" id="pasteTitleErr">Title is required.</div>
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea class="form-control" id="pasteContent" placeholder="Paste document content here…"></textarea>
+          <div class="field-error" id="pasteContentErr">Content is required.</div>
+        </div>
+      </div>
+
+      <!-- Fetch URL tab -->
+      <div class="tab-panel" id="tab-url">
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" class="form-control" id="urlTitle" placeholder="e.g. NovaTech Blog Post" />
+          <div class="field-error" id="urlTitleErr">Title is required.</div>
+        </div>
+        <div class="form-group">
+          <label>URL to Fetch</label>
+          <input type="url" class="form-control" id="urlInput" placeholder="https://example.com/document" />
+          <div class="field-error" id="urlInputErr">A valid URL is required.</div>
+          <div class="form-hint">The server will fetch and extract the text content from this URL.</div>
+        </div>
+      </div>
+
+      <div class="login-error" id="addError" style="margin-bottom:0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-add" id="addSubmitBtn" onclick="submitAddDoc()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add to Index
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Delete Modal ────────────────────────────────────────────── -->
+<div class="modal-backdrop hidden" id="deleteModal">
+  <div class="modal confirm-modal">
+    <div class="confirm-body">
+      <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </div>
+      <h3>Delete Document?</h3>
+      <p>
+        You are about to permanently remove
+        <strong id="deleteDocTitle">this document</strong>
+        from the knowledge base. This action cannot be undone.
+      </p>
+    </div>
+    <div class="confirm-footer">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast Container ─────────────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ── State ────────────────────────────────────────────────────────────────
+  let token = localStorage.getItem('nt_admin_token') || null;
+  let currentSection = 'documents';
+  let activeTab = 'paste';
+  let pendingDeleteId = null;
+  let activityLog = [];
+
+  // ── Boot ─────────────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    if (token) {
+      showApp();
+    }
+  });
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const err = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    err.classList.remove('visible');
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        err.textContent = data.detail || 'Invalid credentials.';
+        err.classList.add('visible');
+      } else {
+        token = data.token;
+        localStorage.setItem('nt_admin_token', token);
+        localStorage.setItem('nt_admin_user', username);
+        showApp();
+      }
+    } catch (_) {
+      err.textContent = 'Could not reach the server. Is the application running?';
+      err.classList.add('visible');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+
+  function logout() {
+    token = null;
+    localStorage.removeItem('nt_admin_token');
+    localStorage.removeItem('nt_admin_user');
+    document.getElementById('appShell').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').classList.remove('visible');
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appShell').classList.remove('hidden');
+    const storedUser = localStorage.getItem('nt_admin_user') || 'admin';
+    document.getElementById('headerUsername').textContent = storedUser;
+    document.getElementById('headerAvatar').textContent = storedUser.charAt(0).toUpperCase();
+    loadDocuments();
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelector(`[data-section="${name}"]`).classList.add('active');
+    currentSection = name;
+    if (name === 'documents') loadDocuments();
+  }
+
+  // ── API helpers ───────────────────────────────────────────────────────────
+  function authHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token,
+    };
+  }
+
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: { ...authHeaders(), ...(options.headers || {}) },
+    });
+    if (res.status === 401) {
+      logout();
+      throw new Error('Unauthorised');
+    }
+    return res;
+  }
+
+  // ── Load Documents ────────────────────────────────────────────────────────
+  async function loadDocuments() {
+    const tbody = document.getElementById('docsTableBody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner"></span> Loading…</td></tr>';
+    document.getElementById('tableCount').textContent = 'Loading…';
+
+    try {
+      const res = await apiFetch('/api/admin/documents');
+      if (!res.ok) { showToast('Failed to load documents.', 'error'); return; }
+      const docs = await res.json();
+      renderDocTable(docs);
+      updateStats(docs);
+    } catch (e) {
+      if (e.message !== 'Unauthorised') {
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="7" style="color:var(--red)">Error loading documents.</td></tr>';
+      }
+    }
+  }
+
+  function renderDocTable(docs) {
+    const tbody = document.getElementById('docsTableBody');
+    document.getElementById('tableCount').textContent = `${docs.length} document${docs.length !== 1 ? 's' : ''}`;
+    document.getElementById('navDocBadge').textContent = docs.length;
+
+    if (docs.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="7">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <p>No documents in the knowledge base yet.<br>Click <strong>Add Document</strong> to get started.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = docs.map(doc => {
+      const sourceClass = doc.source === 'system' ? 'badge-system'
+                        : doc.source === 'url'    ? 'badge-url'
+                        :                           'badge-upload';
+      const sourceLabel = doc.source === 'system' ? 'system'
+                        : doc.source === 'url'    ? 'url'
+                        :                           'upload';
+      const date = new Date(doc.added_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const size = doc.size_chars >= 1000
+        ? (doc.size_chars / 1000).toFixed(1) + 'k'
+        : doc.size_chars + '';
+      const shortId = doc.id.length > 18 ? doc.id.slice(0, 18) + '…' : doc.id;
+
+      return `
+        <tr>
+          <td class="td-id" title="${escHtml(doc.id)}">${escHtml(shortId)}</td>
+          <td class="td-title"><div class="td-title-text" title="${escHtml(doc.title)}">${escHtml(doc.title)}</div></td>
+          <td><span class="badge ${sourceClass}">${sourceLabel}</span></td>
+          <td style="color:var(--muted);font-size:.78rem">${escHtml(doc.added_by)}</td>
+          <td class="td-date">${date}</td>
+          <td class="td-size">${size} chars</td>
+          <td class="td-actions">
+            <button class="icon-btn" title="Delete document" onclick="openDeleteModal('${escHtml(doc.id)}', '${escHtml(doc.title.replace(/'/g, "\\'"))}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function updateStats(docs) {
+    const system = docs.filter(d => d.source === 'system').length;
+    const user   = docs.length - system;
+    const total  = docs.reduce((a, d) => a + (d.size_chars || 0), 0);
+
+    document.getElementById('statTotal').textContent  = docs.length;
+    document.getElementById('statSystem').textContent = system;
+    document.getElementById('statUser').textContent   = user;
+    document.getElementById('statSize').textContent   = total >= 1000 ? (total / 1000).toFixed(1) + 'k' : total;
+  }
+
+  // ── Add Document Modal ────────────────────────────────────────────────────
+  function openAddModal() {
+    clearAddForm();
+    document.getElementById('addModal').classList.remove('hidden');
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'paste') || (i === 1 && tab === 'url'));
+    });
+    document.getElementById('tab-paste').classList.toggle('active', tab === 'paste');
+    document.getElementById('tab-url').classList.toggle('active', tab === 'url');
+  }
+
+  function clearAddForm() {
+    ['pasteTitle', 'pasteContent', 'urlTitle', 'urlInput'].forEach(id => {
+      document.getElementById(id).value = '';
+      document.getElementById(id).classList.remove('error');
+    });
+    ['pasteTitleErr', 'pasteContentErr', 'urlTitleErr', 'urlInputErr'].forEach(id => {
+      document.getElementById(id).classList.remove('visible');
+    });
+    const addErr = document.getElementById('addError');
+    addErr.classList.remove('visible');
+    addErr.textContent = '';
+    switchTab('paste');
+  }
+
+  function showFieldError(fieldId, errId, message) {
+    document.getElementById(fieldId).classList.add('error');
+    const el = document.getElementById(errId);
+    el.textContent = message;
+    el.classList.add('visible');
+    return false;
+  }
+
+  async function submitAddDoc() {
+    const btn = document.getElementById('addSubmitBtn');
+    const addErr = document.getElementById('addError');
+    addErr.classList.remove('visible');
+    let valid = true;
+
+    let body;
+
+    if (activeTab === 'paste') {
+      const title   = document.getElementById('pasteTitle').value.trim();
+      const content = document.getElementById('pasteContent').value.trim();
+      document.getElementById('pasteTitle').classList.remove('error');
+      document.getElementById('pasteContent').classList.remove('error');
+      document.getElementById('pasteTitleErr').classList.remove('visible');
+      document.getElementById('pasteContentErr').classList.remove('visible');
+      if (!title)   { showFieldError('pasteTitle',   'pasteTitleErr',   'Title is required.'); valid = false; }
+      if (!content) { showFieldError('pasteContent', 'pasteContentErr', 'Content is required.'); valid = false; }
+      if (!valid) return;
+      body = { title, content, source: 'upload' };
+    } else {
+      const title = document.getElementById('urlTitle').value.trim();
+      const url   = document.getElementById('urlInput').value.trim();
+      document.getElementById('urlTitle').classList.remove('error');
+      document.getElementById('urlInput').classList.remove('error');
+      document.getElementById('urlTitleErr').classList.remove('visible');
+      document.getElementById('urlInputErr').classList.remove('visible');
+      if (!title) { showFieldError('urlTitle', 'urlTitleErr', 'Title is required.'); valid = false; }
+      if (!url)   { showFieldError('urlInput', 'urlInputErr', 'URL is required.'); valid = false; }
+      if (!valid) return;
+      body = { title, url, source: 'url' };
+    }
+
+    btn.disabled = true;
+    const origContent = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Adding…';
+
+    try {
+      const res = await apiFetch('/api/admin/documents', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        addErr.textContent = data.detail || 'Failed to add document.';
+        addErr.classList.add('visible');
+      } else {
+        closeAddModal();
+        addActivity('add', data.doc.title, data.doc.id, data.doc.source);
+        await loadDocuments();
+        showToast(`Document "${data.doc.title}" added successfully.`, 'success');
+      }
+    } catch (e) {
+      if (e.message !== 'Unauthorised') {
+        addErr.textContent = 'Network error. Please try again.';
+        addErr.classList.add('visible');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origContent;
+    }
+  }
+
+  // ── Delete Modal ──────────────────────────────────────────────────────────
+  function openDeleteModal(id, title) {
+    pendingDeleteId = id;
+    document.getElementById('deleteDocTitle').textContent = `"${title}"`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
+
+  function closeDeleteModal() {
+    pendingDeleteId = null;
+    document.getElementById('deleteModal').classList.add('hidden');
+  }
+
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      const res = await apiFetch(`/api/admin/documents/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (res.ok) {
+        const titleEl = document.getElementById('deleteDocTitle');
+        const titleText = titleEl.textContent.replace(/^"|"$/g, '');
+        addActivity('delete', titleText, id, '');
+        closeDeleteModal();
+        await loadDocuments();
+        showToast('Document deleted from knowledge base.', 'success');
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to delete document.', 'error');
+        closeDeleteModal();
+      }
+    } catch (e) {
+      if (e.message !== 'Unauthorised') {
+        showToast('Network error during delete.', 'error');
+      }
+      closeDeleteModal();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Delete';
+    }
+  }
+
+  // Close modals on backdrop click
+  document.getElementById('addModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('addModal')) closeAddModal();
+  });
+  document.getElementById('deleteModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('deleteModal')) closeDeleteModal();
+  });
+
+  // ── Activity ──────────────────────────────────────────────────────────────
+  function addActivity(type, title, id, source) {
+    const now = new Date();
+    activityLog.unshift({ type, title, id, source, time: now });
+    renderActivity();
+  }
+
+  function renderActivity() {
+    const list = document.getElementById('activityList');
+    if (activityLog.length === 0) {
+      list.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);font-size:.85rem">No activity recorded yet.</div>';
+      return;
+    }
+    list.innerHTML = activityLog.slice(0, 50).map(entry => {
+      const dotClass = entry.type === 'add' ? 'dot-add' : 'dot-delete';
+      const verb     = entry.type === 'add' ? 'Added' : 'Deleted';
+      const timeStr  = entry.time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const dateStr  = entry.time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `
+        <div class="activity-item">
+          <div class="activity-dot ${dotClass}"></div>
+          <div>
+            <div class="activity-text">${verb} document <strong>${escHtml(entry.title)}</strong></div>
+            <div class="activity-time">${dateStr} at ${timeStr}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Toasts ────────────────────────────────────────────────────────────────
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<div class="toast-dot"></div><span>${escHtml(message)}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity .3s, transform .3s';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      setTimeout(() => toast.remove(), 320);
+    }, 3500);
+  }
+
+  // ── Utils ─────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+</script>
+
+</body>
+</html>
