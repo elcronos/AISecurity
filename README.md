@@ -53,7 +53,7 @@ The series is divided into three parts:
 
 | # | Topic | Environment | Status |
 |---|-------|-------------|--------|
-| 07 | [Attacks on LLMs (Text-only)](#07-attacks-on-llms-text-only) | Docker + Local LLM | 🔜 Coming Soon |
+| 07 | [Attacks on LLMs (Text-only)](#07-attacks-on-llms-text-only) | Docker + Local LLM | ✅ Available |
 | 08 | [Attacks on Multimodal LLMs](#08-attacks-on-multimodal-llms) | Docker + Local LLM | 🔜 Coming Soon |
 
 ---
@@ -207,27 +207,35 @@ Modern LLMs introduce a completely new attack surface. Unlike image classifiers,
 
 ### 07. Attacks on LLMs (Text-only)
 
-> 🔜 *Coming Soon* — Docker environment included
+> **Notebook**: `07_llm_attacks_text/` — Docker + local LLM (llama3.2:3b via Ollama)
 
-This module introduces adversarial attacks against text-based LLMs, focusing on the techniques most relevant to real-world deployments.
+Six interactive challenges, each simulating a real company chatbot with a different vulnerability. Everything runs locally — no API keys, no cloud costs.
 
-**Planned topics:**
-- **Prompt injection**: hijacking LLM behaviour by embedding instructions in user input
-- **Jailbreaking**: bypassing safety alignment with adversarial prompts (role-play, prefix injection, suffix attacks)
-- **Indirect prompt injection**: attacking LLMs through retrieved context (RAG poisoning, tool outputs)
-- **Data extraction**: prompting the model to leak its system prompt or training data
+| # | Challenge | Technique | Difficulty |
+|---|-----------|-----------|------------|
+| 1 | Prompt Injection | Override system instructions to leak a hidden promo code | Easy |
+| 2 | Jailbreaking | Break a hard-scoped chatbot out of its persona using creative framing | Medium |
+| 3 | Indirect Prompt Injection | Poison a RAG knowledge base via the admin panel; trigger retrieval to execute your payload | Hard |
+| 4 | Data Exfiltration | Extract confidential credentials using encoding tricks and character-by-character extraction | Hard |
+| 5 | Markdown Exfiltration | Leak secrets silently via a rendered markdown image URL | Hard |
+| 6 | Guardrails Bypass | Evade a keyword-based content filter using synonyms, foreign languages, and indirect framing | Medium |
 
-**Interactive Docker environment:**
-Each attack module ships with a **Docker container running a local LLM configured as a secure chatbot**. The environment includes:
-- A pre-configured chatbot with security controls and a system prompt you must bypass
-- A hint system that progressively reveals attack strategies if you get stuck
-- A payload library with known jailbreak techniques to test and adapt
-- Scoring: the challenge is solved when the LLM breaks its security constraints and reveals the protected information
+**What you will learn:**
+- How prompt injection hijacks LLM behaviour when user input overrides system instructions
+- Why instruction-based guardrails alone are insufficient — and how creative framing defeats them
+- How RAG pipelines create an indirect injection surface through retrieved documents
+- Why keyword-based content filters are fundamentally bypassable
+- How markdown rendering in a browser can silently exfiltrate secrets to attacker-controlled servers
+
+**Environment:**
+- **LLM**: `llama3.2:3b` (≈2 GB download, runs on CPU)
+- **Stack**: FastAPI app + Ollama inference server, orchestrated with Docker Compose
+- **Interface**: Browser-based chat UI with per-challenge hints and solution walkthroughs
 
 ```bash
-# Launch the LLM attack environment (coming soon)
-docker pull elcronos/aisecurity-llm-07
-docker run -p 8080:8080 elcronos/aisecurity-llm-07
+cd 07_llm_attacks_text
+docker compose up --build
+# First run pulls llama3.2:3b (~2 GB) — takes a few minutes
 # Open http://localhost:8080 — try to break the chatbot!
 ```
 
@@ -318,7 +326,19 @@ jupyter notebook adversarial_audio.ipynb
 
 ### Part 3 — LLM Docker Environments
 
-Each LLM module will include a `docker-compose.yml` for one-command startup. Docker environments will run entirely **locally** — no API keys, no cloud costs, no data sent externally.
+**Requirements**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose plugin)
+
+**Module 07 — Attacks on LLMs (Text-only)**
+```bash
+cd AISecurity/07_llm_attacks_text
+docker compose up --build
+```
+- First run downloads `llama3.2:3b` (~2 GB) — subsequent starts are instant
+- Open **http://localhost:8080** in your browser
+- To use a different model: `MODEL_NAME=qwen2.5:7b docker compose up`
+- To stop: `docker compose down`
+
+> Docker environments run entirely **locally** — no API keys, no cloud costs, no data sent externally.
 
 ---
 
@@ -342,12 +362,22 @@ AISecurity/
 │   └── requirements.txt
 ├── 06_adversarial_audio/
 │   └── adversarial_audio.ipynb
-├── 07_llm_attacks_text/              # coming soon
+├── 07_llm_attacks_text/
 │   ├── docker-compose.yml
-│   └── challenges/
+│   └── app/
+│       ├── main.py                   # FastAPI app + 6 challenge configs
+│       ├── rag_engine.py             # BM25 document store (Challenge 3)
+│       ├── rag_graph.py              # LangGraph RAG pipeline (Challenge 3)
+│       ├── auth.py                   # JWT auth for admin panel (Challenge 3)
+│       ├── Dockerfile
+│       ├── entrypoint.sh             # Pulls LLM model on first start
+│       ├── requirements.txt
+│       └── static/
+│           ├── index.html            # Challenge selection page
+│           ├── chat.html             # Challenge chat interface
+│           └── admin.html            # Knowledge base admin panel (Challenge 3)
 └── 08_llm_attacks_multimodal/        # coming soon
-    ├── docker-compose.yml
-    └── challenges/
+    └── docker-compose.yml
 ```
 
 ---
