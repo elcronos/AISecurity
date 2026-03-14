@@ -72,8 +72,8 @@ An introduction to adversarial attacks on image classifiers using ResNet50 and I
 **What you will learn:**
 - How to craft adversarial examples that are imperceptible to humans but reliably fool deep neural networks
 - A graphical breakdown of every component in the FGSM equation: the gradient, the sign operation, the perturbation budget ε
-- Why FGSM can *recover* confidence at large ε (overshooting) and why PGD solves this with iterative projection
-- Quantitative evaluation: accuracy and confidence erosion across ε ∈ {0.005, 0.01, 0.1, 0.3, 0.5} on a 20-class ImageNet subset
+- Why FGSM can *recover* confidence at large ε (overshooting) and why PGD-20 solves this with iterative projection
+- Quantitative evaluation: accuracy and confidence erosion across ε ∈ {0.005, 0.01, 0.1, 0.3} on a 20-class ImageNet subset (ε = 0.5 appears in single-image demos only)
 
 **Requirements**: PyTorch, torchvision, matplotlib — see `01_adversarial_attacks_cnns/requirements.txt`
 
@@ -92,7 +92,7 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 - Why gradient steps are suboptimal and how curvature-aware updates (Newton's method, L-BFGS) find smaller perturbations
 - The logit-margin objective and why it avoids the gradient saturation that breaks cross-entropy at high-confidence predictions
 - Why C&W was specifically designed to defeat gradient-masking defenses
-- Quantitative comparison — accuracy, L2 distortion, computation time — across FGSM, PGD-40, L-BFGS, and C&W on a 5-class ImageNet subset
+- Quantitative comparison — accuracy, L2 distortion, computation time — across FGSM, PGD-40, L-BFGS, and C&W on a 5-class ImageNet subset (50 images, 10 per class)
 - Per-class accuracy breakdown: grouped bar charts, line trends, and a full attacks × classes heatmap
 
 **Key insight**: Second-order attacks achieve **lower L2 distortion** by concentrating perturbations on the most sensitive pixels. But because they are unconstrained in L∞, individual pixels can change by more than ε — a fundamentally different threat model from FGSM/PGD.
@@ -107,17 +107,13 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 
 Classification is just the start. Real-world AI systems rely on **object detectors** — deployed in surveillance cameras, autonomous vehicles, and drone systems. This module shows how white-box adversarial attacks can make *persons completely invisible* to YOLOv5.
 
-Two complementary attacks are demonstrated:
-
-- **Adversarial Patch** — a small optimised image region placed on or near a person that suppresses all detection boxes. Analogous to a sticker or printed sign.
-- **Adversarial Clothing** — the patch texture is resized to fill the torso region of a detected person, simulating a printed t-shirt that renders the wearer invisible to surveillance cameras.
+The attack implemented is **Adversarial Clothing** — an optimised patch texture applied to the torso region of a detected person, simulating a printed t-shirt that renders the wearer invisible to surveillance cameras.
 
 **What you will learn:**
-- How object detectors (YOLOv5su / anchor-free head) are attacked at the feature-pyramid level
-- The white-box patch optimisation loop: gradient descent directly on the pixel values of the patch, backpropagating through the full detection head
-- Why these attacks are physically deployable: the patch survives resizing, placement variation, and partial occlusion
-- Patch size sensitivity analysis: how much visual area is needed for a reliable attack
-- Transferability: a patch optimised on one image suppresses detections on unseen images
+- How object detectors (YOLOv5su with anchor-free head) produce detection logits that can be directly attacked via backpropagation
+- The white-box patch optimisation loop: gradient descent on the pixel values of the patch, minimising the objectness score of person detections
+- Why the attack is physically deployable: the patch texture is composited onto the torso bounding box, mimicking a real garment print
+- The effect of training iterations on suppression confidence: how loss curves reveal when the patch has converged
 
 **Key papers:**
 - Thys et al. (2019). *Fooling automated surveillance cameras* — [arXiv:1904.08653](https://arxiv.org/abs/1904.08653)
@@ -137,14 +133,14 @@ A new class of adversarial attack that goes beyond misclassification — it **hi
 - **Adversarial Reprogramming** (Elsayed et al., 2019) — [arXiv:1806.11146](https://arxiv.org/abs/1806.11146)
 
 **What you will learn:**
-- The core concept: how a frozen ImageNet classifier can be repurposed to classify MNIST digits, count squares, or solve CIFAR-10
+- The core concept: how a frozen model can be repurposed to solve a different task via a learnable input transformation — without changing any weights
 - The mathematical formulation: the adversarial program P, the input mapping h_f (embedding + masking), and the output mapping h_g (label remapping)
 - How to implement and train an adversarial program from scratch using gradient-based optimisation
-- Why this attack works: deep networks encode surprisingly general-purpose representations
+- Why this attack works: models encode surprisingly general-purpose representations that transfer across tasks
 - Security implications: compute theft via API hijacking, covert channels, and safety-critical model compromise
 - How adversarial reprogramming differs from classic evasion attacks and universal perturbations
 
-**Key result from the paper**: Inception V3 reprogrammed to classify MNIST digits achieves **97.3% accuracy** — nearly matching a dedicated MNIST model — without any weight updates.
+**Implementation note**: The notebook demonstrates the concept using a lightweight sklearn MLP classifier on digit subsets (8×8 images from scikit-learn's `load_digits`), making it runnable without a GPU. Paper results (e.g. Inception V3 reprogrammed to classify MNIST at 97.3%) are reproduced as reference charts from the original publication.
 
 **Requirements**: numpy, matplotlib, scikit-learn — lightweight, no GPU needed.
 
@@ -157,14 +153,16 @@ A new class of adversarial attack that goes beyond misclassification — it **hi
 Attacks are only half the story. This module covers four families of defenses — from quick preprocessing heuristics to mathematically certified guarantees — and explains precisely *why* certifying robustness is fundamentally hard.
 
 - **Input preprocessing** (JPEG compression, Gaussian smoothing, bit-depth reduction) — zero-retraining defenses that destroy high-frequency adversarial noise; evaluated against adaptive attackers to show their limitations
-- **Adversarial Training** (FGSM-AT) — the minimax training objective; demonstrated by fine-tuning a frozen ResNet50 head on a 2-class subset (tench vs parachute) with side-by-side standard vs adversarial training comparison
+- **Adversarial Training** (FGSM-AT) — the minimax training objective; demonstrated by fine-tuning a frozen ResNet50 head on a 2-class subset (tench vs parachute) using a 50/50 clean+adversarial mix for 10 epochs, with side-by-side standard vs adversarial training comparison
 - **Randomized Smoothing** (Cohen et al., 2019) — Monte Carlo smoothed classifier with probabilistic L₂ certified radius $r = \sigma \cdot \Phi^{-1}(p_A)$; accuracy vs radius tradeoff sweep across σ ∈ {0.12, 0.25, 0.50}
+- **IBP Certified Training** (Interval Bound Propagation) — deterministic L∞ certification via linear relaxation; shows how IBP provides tight bounds for L∞ balls through linear layers
 - **Why L₂ is harder to certify than L∞** — geometric intuition: L∞ balls stay axis-aligned through linear layers (IBP is tight), while L₂ balls become ellipsoids (IBP is a loose over-approximation); illustrated with a 3-panel figure
 
 **What you will learn:**
 - Why heuristic preprocessing defenses fail against *adaptive* attackers who craft examples through the defense
 - How the adversarial training minimax objective formally trades clean accuracy for empirical robustness
 - How randomized smoothing converts any classifier into one with a provable L₂ robustness certificate
+- How IBP provides deterministic L∞ certified bounds and why it complements randomized smoothing
 - Why the L∞ threat model (FGSM/PGD) is easier to certify deterministically than the L₂ threat model (C&W)
 - How to read and interpret robustness benchmarks (RobustBench)
 
@@ -182,20 +180,20 @@ The same gradient-based attack math that fools image classifiers can be applied 
 
 Three attack scenarios are covered:
 
-- **Untargeted adversarial STT** — perturb a mel spectrogram with PGD so that Whisper transcribes the audio differently, without specifying a target phrase
-- **Adversarial audio event classification** — fool MIT's AST classifier (527-class AudioSet) into misclassifying a sound clip; shows why naive spectrogram-domain attacks break on round-trip and how waveform-domain perturbations fix it
-- **FGSM vs PGD comparison** — side-by-side evaluation of single-step vs multi-step attacks on the evasion task, with spectrogram visualisations and SNR measurements
+- **Targeted adversarial STT** — perturb audio in the waveform domain with PGD so that Whisper outputs a specific target phrase (e.g. "open the door"), while the audio sounds unchanged to a human listener
+- **Adversarial audio event classification** — fool MIT's AST classifier (527-class AudioSet) into misclassifying a sound clip using an Adam-based waveform-domain optimisation; shows why naive spectrogram-domain attacks break on round-trip and how waveform-domain perturbations fix it
+- **FGSM vs multi-step comparison** — side-by-side evaluation of single-step (FGSM) vs Adam-based multi-step attacks on the AST evasion task, with spectrogram visualisations
 
 **What you will learn:**
 - How the mel spectrogram pipeline (waveform → STFT → mel filterbank → log compression) creates a differentiable image-like representation
-- Why standard image attacks (FGSM/PGD) transfer directly to the spectrogram domain
-- The round-trip problem: why spectrograms perturbed in frequency space don't survive Griffin-Lim inversion, and how to attack in the waveform domain instead
-- How to measure imperceptibility in audio: SNR (dB) as the acoustic analogue of L∞/L2 pixel distance
-- Why AST (Audio Spectrogram Transformer) uses the same ViT patch-attention architecture as image transformers — making it vulnerable to the same attack patterns
+- The round-trip problem: why perturbations applied in the spectrogram domain don't survive waveform reconstruction, and why both attacks operate in the raw waveform domain instead
+- How to measure imperceptibility in audio: L∞ norm on the waveform as the acoustic analogue of pixel-space perturbation budgets
+- Why AST (Audio Spectrogram Transformer) uses the same ViT patch-attention architecture as image transformers — making it vulnerable to gradient-based attacks
+- The difference between targeted attacks (force a specific output) and untargeted evasion (any wrong label)
 
 **Key models:**
-- OpenAI Whisper (speech-to-text) — attacked via its internal log-mel spectrogram
-- `MIT/ast-finetuned-audioset-10-10-0.4593` — 527-class AudioSet event classifier
+- OpenAI Whisper (`whisper-base`) — targeted STT attack in the waveform domain
+- `MIT/ast-finetuned-audioset-10-10-0.4593` — 527-class AudioSet event classifier, attacked via Adam-based waveform optimisation
 
 **Requirements**: `openai-whisper`, `torchaudio`, `librosa`, `transformers`, `soundfile` — see install cell in notebook.
 
