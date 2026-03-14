@@ -62,7 +62,7 @@ The series is divided into three parts:
 
 ### 01. Adversarial Attacks on CNNs
 
-> **Notebook**: `01_adversarial_attacks_cnns/adversarial_attacks_cnn.ipynb`
+> **Notebook**: [`01_adversarial_attacks_cnns/adversarial_attacks_cnn.ipynb`](https://github.com/elcronos/AISecurity/blob/main/01_adversarial_attacks_cnns/adversarial_attacks_cnn.ipynb)
 
 An introduction to adversarial attacks on image classifiers using ResNet50 and ImageNet. Covers the two most important white-box attacks:
 
@@ -81,7 +81,7 @@ An introduction to adversarial attacks on image classifiers using ResNet50 and I
 
 ### 02. Second-Order Attacks
 
-> **Notebook**: `02_second_order_attacks/second_order_attacks.ipynb`
+> **Notebook**: [`02_second_order_attacks/second_order_attacks.ipynb`](https://github.com/elcronos/AISecurity/blob/main/02_second_order_attacks/second_order_attacks.ipynb)
 
 First-order attacks like FGSM and PGD follow the gradient sign. Second-order attacks use **curvature information** (the Hessian) to find more precise adversarial examples with smaller, less perceptible perturbations.
 
@@ -103,7 +103,7 @@ First-order attacks like FGSM and PGD follow the gradient sign. Second-order att
 
 ### 03. Adversarial Attacks on Object Detection
 
-> **Notebook**: `03_adversarial_object_detection/adversarial_object_detection.ipynb`
+> **Notebook**: [`03_adversarial_object_detection/adversarial_object_detection.ipynb`](https://github.com/elcronos/AISecurity/blob/main/03_adversarial_object_detection/adversarial_object_detection.ipynb)
 
 Classification is just the start. Real-world AI systems rely on **object detectors** — deployed in surveillance cameras, autonomous vehicles, and drone systems. This module shows how white-box adversarial attacks can make *persons completely invisible* to YOLOv5.
 
@@ -130,7 +130,7 @@ Two complementary attacks are demonstrated:
 
 ### 04. Adversarial Reprogramming
 
-> **Notebook**: `04_adversarial_reprogramming/adversarial_reprogramming.ipynb`
+> **Notebook**: [`04_adversarial_reprogramming/adversarial_reprogramming.ipynb`](https://github.com/elcronos/AISecurity/blob/main/04_adversarial_reprogramming/adversarial_reprogramming.ipynb)
 
 A new class of adversarial attack that goes beyond misclassification — it **hijacks** a pre-trained neural network to perform a completely different task, without modifying any weights. Based on the paper by Elsayed, Goodfellow & Sohl-Dickstein (ICLR 2019).
 
@@ -152,7 +152,7 @@ A new class of adversarial attack that goes beyond misclassification — it **hi
 
 ### 05. Defenses for CNNs
 
-> **Notebook**: `05_defenses_cnns/defenses_cnns.ipynb`
+> **Notebook**: [`05_defenses_cnns/defenses_cnns.ipynb`](https://github.com/elcronos/AISecurity/blob/main/05_defenses_cnns/defenses_cnns.ipynb)
 
 Attacks are only half the story. This module covers four families of defenses — from quick preprocessing heuristics to mathematically certified guarantees — and explains precisely *why* certifying robustness is fundamentally hard.
 
@@ -176,7 +176,7 @@ Attacks are only half the story. This module covers four families of defenses �
 
 ### 06. Adversarial Audio Attacks
 
-> **Notebook**: `06_adversarial_audio/adversarial_audio.ipynb`
+> **Notebook**: [`06_adversarial_audio/adversarial_audio.ipynb`](https://github.com/elcronos/AISecurity/blob/main/06_adversarial_audio/adversarial_audio.ipynb)
 
 The same gradient-based attack math that fools image classifiers can be applied to audio models — by treating the **mel spectrogram as a 2D image**. This module demonstrates white-box attacks on a speech-to-text model (OpenAI Whisper) and an audio event classifier (Audio Spectrogram Transformer).
 
