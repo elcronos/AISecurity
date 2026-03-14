@@ -180,6 +180,82 @@
     }
     .self-report-btn:hover { background: rgba(34,197,94,.2); }
 
+    /* show-solution */
+    .solution-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      background: rgba(99,102,241,.1);
+      border: 1px solid rgba(99,102,241,.3);
+      color: #818cf8;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      margin-top: 10px;
+    }
+    .solution-btn:hover { background: rgba(99,102,241,.2); border-color: #818cf8; }
+
+    .solution-panel {
+      margin-top: 12px;
+      background: rgba(99,102,241,.05);
+      border: 1px solid rgba(99,102,241,.2);
+      border-radius: 8px;
+      padding: 14px;
+      animation: fadeIn .3s ease;
+    }
+    .solution-overview {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+    .solution-step {
+      margin-bottom: 14px;
+      border-left: 2px solid rgba(99,102,241,.4);
+      padding-left: 10px;
+    }
+    .solution-step-header {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      margin-bottom: 4px;
+    }
+    .solution-step-explanation {
+      font-size: .76rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 6px;
+    }
+    .solution-prompt {
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 7px 10px;
+      font-size: .74rem;
+      font-family: monospace;
+      color: #c4b5fd;
+      line-height: 1.5;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .solution-prompt:hover { border-color: #818cf8; background: rgba(99,102,241,.1); }
+    .solution-note {
+      font-size: .74rem;
+      color: var(--amber);
+      line-height: 1.5;
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+
     /* ── Chat area ── */
     .chat-area {
       flex: 1;
@@ -445,6 +521,15 @@
       <div id="hintList"></div>
     </div>
 
+    <!-- Show Solution (appears after 4th hint) -->
+    <div class="panel" id="solutionPanel" style="display:none">
+      <h3>🔓 Stuck?</h3>
+      <button class="solution-btn" id="solutionBtn" onclick="toggleSolution()">
+        👁 Show Solution
+      </button>
+      <div id="solutionContent" style="display:none"></div>
+    </div>
+
     <!-- Challenge 2 only: self-report -->
     <div class="panel" id="selfReportPanel" style="display:none">
       <h3>✅ Done?</h3>
@@ -452,6 +537,21 @@
         If you have successfully bypassed the guardrails, click below.
       </p>
       <button class="self-report-btn" onclick="showVictory()">Mark Challenge as Solved 🎉</button>
+    </div>
+
+    <!-- Challenge 3 only: admin panel link -->
+    <div class="panel" id="adminPanel" style="display:none">
+      <h3>🔑 Admin Panel</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px">
+        Once you've extracted the admin credentials from the bot, use them to
+        log in to the knowledge base admin panel.
+      </p>
+      <a id="adminLink" href="/admin" target="_blank" style="
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        width:100%;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);
+        color:#c084fc;font-size:.78rem;font-weight:600;padding:8px 12px;
+        border-radius:6px;text-decoration:none;transition:background .2s;
+      ">🔐 Open Admin Panel (/admin)</a>
     </div>
 
     <!-- Challenge 5 only: attacker server config -->
@@ -554,6 +654,10 @@
       document.getElementById('selfReportPanel').style.display = 'block';
     }
 
+    if (challenge.admin_panel) {
+      document.getElementById('adminPanel').style.display = 'block';
+    }
+
     if (challenge.markdown_render) {
       document.getElementById('attackerPanel').style.display = 'block';
     }
@@ -651,7 +755,17 @@
           if (!line.trim()) continue;
           try {
             const ev = JSON.parse(line);
-            if (ev.type === 'doc') {
+            if (ev.type === 'blocked') {
+              // Input was blocked by guardrail — display but do NOT add to history
+              bub.textContent = ev.content;
+              // Remove cursor
+              const bc = bub.querySelector('.cursor');
+              if (bc) bc.remove();
+              // Style as a system/error message
+              bub.style.color = 'var(--muted)';
+              bub.style.fontStyle = 'italic';
+              // No history push — blocked messages are not real assistant turns
+            } else if (ev.type === 'doc') {
               addDocPill(ev.title);
             } else if (ev.type === 'token') {
               fullText += ev.content;
@@ -729,11 +843,109 @@
     const remaining = (challenge?.hints?.length || 0) - hintIndex;
     document.getElementById('hintCount').textContent = Math.max(0, remaining);
 
+    // Show solution panel after 2 hints
+    if (hintIndex >= 2) {
+      document.getElementById('solutionPanel').style.display = 'block';
+    }
+
     if (data.is_last) {
       document.getElementById('hintBtn').disabled = true;
       document.getElementById('hintBtn').style.opacity = '.4';
     }
   });
+
+  // ── Solution panel ────────────────────────────────────────────────────────
+  let solutionLoaded = false;
+  let solutionVisible = false;
+
+  async function toggleSolution() {
+    const content = document.getElementById('solutionContent');
+    const btn = document.getElementById('solutionBtn');
+
+    if (solutionVisible) {
+      content.style.display = 'none';
+      btn.textContent = '👁 Show Solution';
+      solutionVisible = false;
+      return;
+    }
+
+    if (!solutionLoaded) {
+      btn.textContent = '⏳ Loading…';
+      try {
+        const res = await fetch(`/api/solution/${challengeId}`);
+        if (!res.ok) throw new Error('Not found');
+        const sol = await res.json();
+        renderSolution(sol, content);
+        solutionLoaded = true;
+      } catch (_) {
+        content.innerHTML = '<p style="font-size:.78rem;color:var(--muted)">Solution not available.</p>';
+        // Do NOT set solutionLoaded = true on failure — allow retry on next click
+      }
+    }
+
+    content.style.display = 'block';
+    btn.textContent = '🙈 Hide Solution';
+    solutionVisible = true;
+  }
+
+  function renderSolution(sol, container) {
+    let html = '';
+
+    if (sol.overview) {
+      html += `<p class="solution-overview">${escHtml(sol.overview)}</p>`;
+    }
+
+    if (sol.steps && sol.steps.length) {
+      for (const s of sol.steps) {
+        html += `<div class="solution-step">`;
+        html += `<div class="solution-step-header">Step ${s.step}: ${escHtml(s.title)}</div>`;
+        if (s.explanation) {
+          html += `<div class="solution-step-explanation">${escHtml(s.explanation)}</div>`;
+        }
+        if (s.example_prompts && s.example_prompts.length) {
+          for (const p of s.example_prompts) {
+            const isNav = p.startsWith('→') || p.startsWith('Step ');
+            if (isNav) {
+              html += `<div class="solution-prompt" style="cursor:default;color:var(--muted)">${escHtml(p)}</div>`;
+            } else {
+              html += `<div class="solution-prompt" title="Click to use this prompt" onclick="useSolutionPrompt(this)">${escHtml(p)}</div>`;
+            }
+          }
+        }
+        html += `</div>`;
+      }
+    }
+
+    if (sol.note) {
+      html += `<div class="solution-note">💡 ${escHtml(sol.note)}</div>`;
+    }
+
+    const panel = document.createElement('div');
+    panel.className = 'solution-panel';
+    panel.innerHTML = html;
+    container.innerHTML = '';
+    container.appendChild(panel);
+  }
+
+  function useSolutionPrompt(el) {
+    const text = el.textContent.trim();
+    const inp = document.getElementById('msgInput');
+    inp.value = text;
+    inp.style.height = '';
+    inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
+    inp.focus();
+    // Scroll to bottom of page to show input
+    inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
   // ── Victory ──────────────────────────────────────────────────────────────
   function showVictory(msg) {

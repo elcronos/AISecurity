@@ -250,10 +250,12 @@ def search(query: str, top_k: int = 3) -> list[Document]:
         key=lambda x: x[0],
         reverse=True,
     )
+    query_tokens = set(_tokenize(query))
     results = []
     for score, doc in ranked[:top_k]:
-        if score <= 0:
-            break
+        title_tokens = set(_tokenize(doc["title"]))
+        if score <= 0 and not (query_tokens & title_tokens):
+            continue  # skip only if score=0 AND no title overlap
         results.append(
             Document(
                 page_content=doc["content"],
