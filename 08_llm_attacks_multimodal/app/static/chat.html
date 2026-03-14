@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Challenge — VistaGuard</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked@4/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080d1a;
+      --surface:  #0f1729;
+      --surface2: #131e30;
+      --border:   #1a2740;
+      --primary:  #00c8ff;
+      --text:     #d4e0f0;
+      --muted:    #5a7090;
+      --green:    #22c55e;
+      --amber:    #f59e0b;
+      --red:      #ef4444;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: relative;
+      z-index: 2;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .back-btn {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .82rem;
+      display: flex; align-items: center; gap: 5px;
+      transition: color .2s;
+    }
+    .back-btn:hover { color: var(--primary); }
+
+    .company-brand { display: flex; align-items: center; gap: 10px; }
+    .company-avatar { font-size: 1.4rem; }
+    .company-name   { font-size: .92rem; font-weight: 700; color: #fff; }
+    .company-tag    { font-size: .72rem; color: var(--muted); }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .challenge-badge {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+    .diff-badge {
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 300px;
+      min-width: 300px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .panel {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel h3 {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .panel p, .panel li {
+      font-size: .82rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .panel ul { padding-left: 14px; }
+    .panel li { margin-bottom: 4px; }
+
+    .objective-text {
+      font-size: .86rem;
+      color: var(--primary);
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    /* hints */
+    .hint-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--amber);
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 10px;
+    }
+    .hint-btn:hover { border-color: var(--amber); background: rgba(245,158,11,.06); }
+
+    .hint-item {
+      background: rgba(245,158,11,.06);
+      border: 1px solid rgba(245,158,11,.2);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: .78rem;
+      color: var(--text);
+      line-height: 1.55;
+      margin-bottom: 6px;
+      animation: fadeIn .3s ease;
+    }
+
+    /* self-report */
+    .self-report-btn {
+      width: 100%;
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.3);
+      color: var(--green);
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .self-report-btn:hover { background: rgba(34,197,94,.2); }
+
+    /* solution panel */
+    .solution-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      background: rgba(99,102,241,.1);
+      border: 1px solid rgba(99,102,241,.3);
+      color: #818cf8;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      margin-top: 10px;
+    }
+    .solution-btn:hover { background: rgba(99,102,241,.2); border-color: #818cf8; }
+
+    .solution-panel {
+      margin-top: 12px;
+      background: rgba(99,102,241,.05);
+      border: 1px solid rgba(99,102,241,.2);
+      border-radius: 8px;
+      padding: 14px;
+      animation: fadeIn .3s ease;
+    }
+    .solution-overview {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+    .solution-step {
+      margin-bottom: 14px;
+      border-left: 2px solid rgba(99,102,241,.4);
+      padding-left: 10px;
+    }
+    .solution-step-header {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      margin-bottom: 4px;
+    }
+    .solution-step-explanation {
+      font-size: .76rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 6px;
+    }
+    .solution-prompt {
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 7px 10px;
+      font-size: .74rem;
+      font-family: monospace;
+      color: #c4b5fd;
+      line-height: 1.5;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .solution-prompt:hover { border-color: #818cf8; background: rgba(99,102,241,.1); }
+    .solution-note {
+      font-size: .74rem;
+      color: var(--amber);
+      line-height: 1.5;
+      margin-top: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+
+    /* ── Chat area ── */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      max-width: 76%;
+      animation: fadeIn .25s ease;
+    }
+    .msg.user  { align-self: flex-end; flex-direction: row-reverse; }
+    .msg.bot   { align-self: flex-start; }
+
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .msg.bot  .msg-avatar { background: linear-gradient(135deg, var(--primary), #0055aa); }
+    .msg.user .msg-avatar { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: .86rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.bot  .msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px 12px 12px 3px; }
+    .msg.user .msg-bubble { background: linear-gradient(135deg, var(--primary), #0077cc); color: #000; font-weight: 500; border-radius: 12px 12px 3px 12px; }
+
+    /* Image thumbnail inside user bubble */
+    .msg-image-thumb {
+      display: block;
+      max-height: 120px;
+      max-width: 200px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.2);
+      margin-bottom: 6px;
+      object-fit: cover;
+    }
+
+    .cursor { display: inline-block; width: 8px; height: 14px; background: var(--primary); animation: blink .7s step-end infinite; vertical-align: text-bottom; border-radius: 1px; }
+
+    /* ── Input area (includes image upload zone) ── */
+    .input-wrapper {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 12px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Image drop zone */
+    .image-upload-zone {
+      display: none;
+    }
+    .image-upload-zone.visible {
+      display: block;
+    }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      min-height: 46px;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(0,200,255,.04);
+    }
+
+    .drop-zone-text {
+      font-size: .78rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .drop-zone-text.has-file { color: var(--primary); }
+
+    #imagePreview {
+      max-height: 48px;
+      max-width: 72px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      display: none;
+    }
+
+    .clear-img-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      display: none;
+      white-space: nowrap;
+    }
+    .clear-img-btn:hover { color: var(--red); border-color: var(--red); }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    textarea {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: .88rem;
+      padding: 10px 14px;
+      resize: none;
+      min-height: 42px;
+      max-height: 140px;
+      overflow-y: auto;
+      line-height: 1.5;
+      transition: border-color .2s;
+    }
+    textarea:focus { outline: none; border-color: var(--primary); }
+
+    .send-btn {
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+      font-size: .82rem;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background .2s, opacity .2s;
+      height: 42px;
+      white-space: nowrap;
+    }
+    .send-btn:hover   { background: #00a8d4; }
+    .send-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Victory overlay ── */
+    .victory {
+      position: fixed;
+      inset: 0;
+      background: rgba(8,13,26,.85);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    .victory.hidden { display: none; }
+
+    .victory-box {
+      background: var(--surface);
+      border: 1px solid var(--green);
+      border-radius: 16px;
+      padding: 40px 48px;
+      text-align: center;
+      max-width: 500px;
+      animation: popIn .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .victory-icon { font-size: 3rem; margin-bottom: 16px; }
+    .victory-box h2 { font-size: 1.5rem; color: var(--green); margin-bottom: 12px; }
+    .victory-box p { font-size: .9rem; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+    .victory-actions { display: flex; gap: 12px; justify-content: center; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--primary); color: #000;
+      font-weight: 700; font-size: .82rem;
+      padding: 10px 20px; border-radius: 7px; border: none;
+      cursor: pointer; text-decoration: none; transition: background .2s;
+    }
+    .btn:hover { background: #00a8d4; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: transparent; }
+
+    /* turn counter */
+    .turn-counter {
+      display: inline-block;
+      background: rgba(0,200,255,.08);
+      border: 1px solid rgba(0,200,255,.2);
+      color: var(--primary);
+      font-size: .82rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes popIn  { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes blink  { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* markdown in bot bubbles */
+    .msg-bubble.markdown { white-space: normal; }
+    .msg-bubble.markdown p { margin-bottom: 8px; }
+    .msg-bubble.markdown p:last-child { margin-bottom: 0; }
+    .msg-bubble.markdown h1,
+    .msg-bubble.markdown h2,
+    .msg-bubble.markdown h3 { color: #fff; margin: 10px 0 5px; font-weight: 700; }
+    .msg-bubble.markdown h1 { font-size: 1rem; }
+    .msg-bubble.markdown h2 { font-size: .92rem; }
+    .msg-bubble.markdown h3 { font-size: .86rem; }
+    .msg-bubble.markdown code {
+      background: rgba(0,200,255,.12); color: var(--primary);
+      padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: .82em;
+    }
+    .msg-bubble.markdown pre {
+      background: rgba(0,0,0,.4); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px; overflow-x: auto; margin: 8px 0;
+    }
+    .msg-bubble.markdown pre code { background: none; color: var(--text); padding: 0; }
+    .msg-bubble.markdown a { color: var(--primary); text-decoration: underline; }
+    .msg-bubble.markdown ul, .msg-bubble.markdown ol { padding-left: 18px; margin: 6px 0; }
+    .msg-bubble.markdown li { margin-bottom: 3px; }
+    .msg-bubble.markdown strong { color: #fff; }
+    .msg-bubble.markdown blockquote {
+      border-left: 3px solid var(--primary); padding-left: 10px; color: var(--muted); margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="back-btn" href="/">← All Challenges</a>
+    <div style="width:1px;height:20px;background:var(--border)"></div>
+    <div class="company-brand">
+      <span class="company-avatar" id="cAvatar"></span>
+      <div>
+        <div class="company-name" id="cName">Loading…</div>
+        <div class="company-tag"  id="cTag"></div>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="challenge-badge" id="cBadge">CHALLENGE —</span>
+    <span class="diff-badge"      id="cDiff"></span>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="panel">
+      <h3>🎯 Objective</h3>
+      <p class="objective-text" id="sObjective">Loading…</p>
+    </div>
+
+    <div class="panel">
+      <h3>📋 Scenario</h3>
+      <p id="sScenario" style="white-space:pre-line"></p>
+    </div>
+
+    <div class="panel">
+      <h3>💡 Hints</h3>
+      <button class="hint-btn" id="hintBtn">🔓 Reveal hint (<span id="hintCount">0</span> remaining)</button>
+      <div id="hintList"></div>
+    </div>
+
+    <!-- Show Solution (appears after 2 hints) -->
+    <div class="panel" id="solutionPanel" style="display:none">
+      <h3>🔓 Stuck?</h3>
+      <button class="solution-btn" id="solutionBtn" onclick="toggleSolution()">
+        👁 Show Solution
+      </button>
+      <div id="solutionContent" style="display:none"></div>
+    </div>
+
+    <!-- Challenge 2 only: self-report -->
+    <div class="panel" id="selfReportPanel" style="display:none">
+      <h3>✅ Done?</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px">
+        If you successfully bypassed the filter using an image, click below.
+      </p>
+      <button class="self-report-btn" onclick="showVictory()">Mark Challenge as Solved 🎉</button>
+    </div>
+
+    <!-- Challenge 4 only: adversarial patch download -->
+    <div class="panel" id="patchPanel" style="display:none">
+      <h3>🔬 Adversarial Patch</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:10px">
+        This patch was pre-computed to confuse the model's visual feature extractor.
+        Download it, upload it to ContentShield, and observe the model's response.
+        Run the companion notebook for the full CLIP gradient-based generation.
+      </p>
+      <a href="/static/adversarial_patch.png" download class="btn" style="width:100%;justify-content:center;">
+        ⬇ Download Patch PNG
+      </a>
+    </div>
+
+    <!-- Challenge 5 only: turn counter -->
+    <div class="panel" id="turnPanel" style="display:none">
+      <h3>🔄 Turn Counter</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">
+        Messages sent: <span class="turn-counter" id="turnCount">0</span>
+      </p>
+      <p style="font-size:.72rem;color:var(--muted)">
+        Multi-turn manipulation typically requires 3–5 turns to shift the model's context.
+      </p>
+    </div>
+
+  </aside>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="messages" id="messages"></div>
+
+    <div class="input-wrapper">
+      <!-- Image upload zone (shown for image-capable challenges) -->
+      <div class="image-upload-zone" id="imageZone">
+        <input type="file" id="imageInput" accept="image/*" style="display:none">
+        <div class="drop-zone" id="dropZone">
+          <img id="imagePreview" alt="preview">
+          <span class="drop-zone-text" id="dropText">📎 Drop image here or click to upload (JPEG/PNG/WEBP, max 5 MB)</span>
+          <button class="clear-img-btn" id="clearImgBtn" onclick="clearImage(event)">✕ Remove</button>
+        </div>
+      </div>
+
+      <!-- Text input row -->
+      <div class="input-row">
+        <textarea
+          id="msgInput"
+          rows="1"
+          placeholder="Type your message and press Enter…"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="submitChat()">Send ↑</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Victory overlay -->
+<div class="victory hidden" id="victoryOverlay">
+  <div class="victory-box">
+    <div class="victory-icon">🎉</div>
+    <h2>Challenge Complete!</h2>
+    <p id="victoryMsg"></p>
+    <div class="victory-actions">
+      <a class="btn" href="/">← All Challenges</a>
+      <button class="btn btn-outline" onclick="closeVictory()">Keep Chatting</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const challengeId = location.pathname.split('/').pop();
+  let challenge    = null;
+  let history      = [];
+  let hintIndex    = 0;
+  let streaming    = false;
+  let solved       = false;
+  let turnCount    = 0;
+
+  // Pending image state
+  let pendingImageFile   = null;
+  let pendingImageObjUrl = null;
+
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({ breaks: true, gfm: true, html: true });
+  }
+
+  function renderMd(text) {
+    if (typeof marked === 'undefined') return null;
+    return marked.parse(text);
+  }
+
+  const DIFF_STYLE = {
+    Easy:   'background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25)',
+    Medium: 'background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.25)',
+    Hard:   'background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25)',
+  };
+
+  async function init() {
+    const res = await fetch(`/api/challenges/${challengeId}`);
+    challenge = await res.json();
+
+    document.title = `Challenge ${challenge.id} — ${challenge.name}`;
+    document.getElementById('cAvatar').textContent = challenge.avatar;
+    document.getElementById('cName').textContent   = challenge.company_name;
+    document.getElementById('cTag').textContent    = challenge.company_tagline;
+    document.getElementById('cBadge').textContent  = `CHALLENGE ${challenge.id} — ${challenge.name.toUpperCase()}`;
+    document.getElementById('cDiff').textContent   = challenge.difficulty;
+    document.getElementById('cDiff').setAttribute('style',
+      (DIFF_STYLE[challenge.difficulty] || '') + ';font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:5px');
+
+    document.getElementById('sObjective').textContent = challenge.objective;
+    document.getElementById('sScenario').textContent  = challenge.scenario;
+    document.getElementById('hintCount').textContent  = (challenge.hints || []).length;
+
+    // Show image upload zone for image-capable challenges
+    if (challenge.accepts_image) {
+      document.getElementById('imageZone').classList.add('visible');
+    }
+
+    // Conditional sidebar panels
+    if (challenge.self_report) {
+      document.getElementById('selfReportPanel').style.display = 'block';
+    }
+    if (challenge.sidebar_download) {
+      document.getElementById('patchPanel').style.display = 'block';
+    }
+    if (challenge.multi_turn) {
+      document.getElementById('turnPanel').style.display = 'block';
+    }
+
+    addBotMsg(challenge.welcome_message);
+  }
+
+  // ── Image upload ────────────────────────────────────────────────────────
+
+  const dropZone = document.getElementById('dropZone');
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageFile(file);
+  });
+  dropZone.addEventListener('click', e => {
+    // Don't trigger file input when clicking the clear button
+    if (e.target.id === 'clearImgBtn') return;
+    document.getElementById('imageInput').click();
+  });
+  document.getElementById('imageInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleImageFile(file);
+  });
+
+  function handleImageFile(file) {
+    if (!file.type.startsWith('image/')) return;
+
+    // Revoke previous object URL to avoid memory leaks
+    if (pendingImageObjUrl) URL.revokeObjectURL(pendingImageObjUrl);
+
+    pendingImageFile   = file;
+    pendingImageObjUrl = URL.createObjectURL(file);
+
+    const preview = document.getElementById('imagePreview');
+    preview.src   = pendingImageObjUrl;
+    preview.style.display = 'block';
+
+    document.getElementById('dropText').classList.add('has-file');
+    document.getElementById('dropText').textContent = `📎 ${file.name}`;
+    document.getElementById('clearImgBtn').style.display = 'inline-block';
+  }
+
+  function clearImage(e) {
+    if (e) e.stopPropagation();
+    if (pendingImageObjUrl) URL.revokeObjectURL(pendingImageObjUrl);
+    pendingImageFile   = null;
+    pendingImageObjUrl = null;
+
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imagePreview').src = '';
+    document.getElementById('dropText').classList.remove('has-file');
+    document.getElementById('dropText').textContent = '📎 Drop image here or click to upload (JPEG/PNG/WEBP, max 5 MB)';
+    document.getElementById('clearImgBtn').style.display = 'none';
+    document.getElementById('imageInput').value = '';
+  }
+
+  // ── Messages ──────────────────────────────────────────────────────────────
+
+  function addBotMsg(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg bot';
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = challenge?.avatar || '🤖';
+    const bub = document.createElement('div');
+    bub.className = 'msg-bubble';
+    bub.textContent = text;
+    wrap.appendChild(av);
+    wrap.appendChild(bub);
+    document.getElementById('messages').appendChild(wrap);
+    scrollBottom();
+    return bub;
+  }
+
+  function addUserMsg(text, imageFile) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg user';
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = '👤';
+    const bub = document.createElement('div');
+    bub.className = 'msg-bubble';
+
+    // Show image thumbnail if provided
+    if (imageFile && pendingImageObjUrl) {
+      const thumb = document.createElement('img');
+      thumb.className = 'msg-image-thumb';
+      thumb.src = pendingImageObjUrl;
+      thumb.alt = imageFile.name;
+      bub.appendChild(thumb);
+    }
+
+    if (text) {
+      const t = document.createElement('span');
+      t.textContent = text;
+      bub.appendChild(t);
+    }
+
+    wrap.appendChild(av);
+    wrap.appendChild(bub);
+    document.getElementById('messages').appendChild(wrap);
+    scrollBottom();
+  }
+
+  function scrollBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  // ── Send ─────────────────────────────────────────────────────────────────
+
+  async function send(text) {
+    if (streaming || (!text.trim() && !pendingImageFile)) return;
+    streaming = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    // Snapshot the pending image before clearing UI state
+    const imageFileSnapshot = pendingImageFile;
+
+    // Show user message with thumbnail
+    addUserMsg(text, imageFileSnapshot);
+
+    // Update history and turn counter
+    const userHistory = [...history];
+    if (text.trim()) history.push({ role: 'user', content: text });
+    turnCount++;
+    const tc = document.getElementById('turnCount');
+    if (tc) tc.textContent = turnCount;
+
+    // Build FormData
+    const fd = new FormData();
+    fd.append('message', text);
+    fd.append('challenge_id', challengeId);
+    fd.append('history', JSON.stringify(userHistory));
+    if (imageFileSnapshot) {
+      fd.append('image', imageFileSnapshot, imageFileSnapshot.name);
+    }
+
+    // Clear the pending image UI immediately after capturing the file
+    clearImage(null);
+
+    // Bot placeholder bubble
+    const bub = document.createElement('div');
+    bub.className = 'msg-bubble';
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    bub.appendChild(cursor);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg bot';
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = challenge?.avatar || '🤖';
+    wrap.appendChild(av);
+    wrap.appendChild(bub);
+    document.getElementById('messages').appendChild(wrap);
+    scrollBottom();
+
+    let fullText = '';
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        body: fd,
+        // Note: do NOT set Content-Type — browser sets multipart/form-data boundary
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        bub.textContent = `⚠️ ${errData.detail || 'Request failed. Check image format (JPEG/PNG/WEBP, max 5 MB).'}`;
+        bub.querySelector?.('.cursor')?.remove();
+        streaming = false;
+        document.getElementById('sendBtn').disabled = false;
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const dec    = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value);
+        for (const line of chunk.split('\n')) {
+          if (!line.trim()) continue;
+          try {
+            const ev = JSON.parse(line);
+            if (ev.type === 'token') {
+              fullText += ev.content;
+              bub.textContent = fullText;
+              bub.appendChild(cursor);
+              scrollBottom();
+            } else if (ev.type === 'done') {
+              bub.textContent = fullText;
+              history.push({ role: 'assistant', content: fullText });
+              if (ev.solved && !solved) {
+                solved = true;
+                setTimeout(() => showVictory(ev.solved_message), 600);
+              }
+            } else if (ev.type === 'error') {
+              bub.textContent = `⚠️  ${ev.content}`;
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (err) {
+      bub.textContent = '⚠️  Connection error. Is the model server running?';
+    }
+
+    streaming = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('msgInput').focus();
+  }
+
+  function submitChat() {
+    const inp = document.getElementById('msgInput');
+    const txt = inp.value.trim();
+    inp.value = '';
+    inp.style.height = '';
+    send(txt);
+  }
+
+  document.getElementById('msgInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitChat();
+    }
+  });
+
+  document.getElementById('msgInput').addEventListener('input', function () {
+    this.style.height = '';
+    this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+  });
+
+  // ── Hints ─────────────────────────────────────────────────────────────────
+
+  document.getElementById('hintBtn').addEventListener('click', async () => {
+    const res  = await fetch(`/api/hint/${challengeId}/${hintIndex}`);
+    const data = await res.json();
+
+    const el = document.createElement('div');
+    el.className = 'hint-item';
+    el.textContent = `${hintIndex + 1}. ${data.hint}`;
+    document.getElementById('hintList').appendChild(el);
+
+    hintIndex++;
+    const remaining = (challenge?.hints?.length || 0) - hintIndex;
+    document.getElementById('hintCount').textContent = Math.max(0, remaining);
+
+    if (hintIndex >= 2) {
+      document.getElementById('solutionPanel').style.display = 'block';
+    }
+
+    if (data.is_last) {
+      document.getElementById('hintBtn').disabled = true;
+      document.getElementById('hintBtn').style.opacity = '.4';
+    }
+  });
+
+  // ── Solution panel ────────────────────────────────────────────────────────
+
+  let solutionLoaded  = false;
+  let solutionVisible = false;
+
+  async function toggleSolution() {
+    const content = document.getElementById('solutionContent');
+    const btn = document.getElementById('solutionBtn');
+
+    if (solutionVisible) {
+      content.style.display = 'none';
+      btn.textContent = '👁 Show Solution';
+      solutionVisible = false;
+      return;
+    }
+
+    if (!solutionLoaded) {
+      btn.textContent = '⏳ Loading…';
+      try {
+        const res = await fetch(`/api/solution/${challengeId}`);
+        if (!res.ok) throw new Error('Not found');
+        const sol = await res.json();
+        renderSolution(sol, content);
+        solutionLoaded = true;
+      } catch (_) {
+        content.innerHTML = '<p style="font-size:.78rem;color:var(--muted)">Solution not available.</p>';
+      }
+    }
+
+    content.style.display = 'block';
+    btn.textContent = '🙈 Hide Solution';
+    solutionVisible = true;
+  }
+
+  function renderSolution(sol, container) {
+    let html = '';
+    if (sol.overview) {
+      html += `<p class="solution-overview">${escHtml(sol.overview)}</p>`;
+    }
+    if (sol.steps && sol.steps.length) {
+      for (const s of sol.steps) {
+        html += `<div class="solution-step">`;
+        html += `<div class="solution-step-header">Step ${s.step}: ${escHtml(s.title)}</div>`;
+        if (s.explanation) {
+          html += `<div class="solution-step-explanation">${escHtml(s.explanation)}</div>`;
+        }
+        if (s.example_prompts && s.example_prompts.length) {
+          for (const p of s.example_prompts) {
+            const isNav = p.startsWith('→') || p.startsWith('Step ');
+            if (isNav) {
+              html += `<div class="solution-prompt" style="cursor:default;color:var(--muted)">${escHtml(p)}</div>`;
+            } else {
+              html += `<div class="solution-prompt" title="Click to copy to input" onclick="useSolutionPrompt(this)">${escHtml(p)}</div>`;
+            }
+          }
+        }
+        html += `</div>`;
+      }
+    }
+    if (sol.note) {
+      html += `<div class="solution-note">💡 ${escHtml(sol.note)}</div>`;
+    }
+    const panel = document.createElement('div');
+    panel.className = 'solution-panel';
+    panel.innerHTML = html;
+    container.innerHTML = '';
+    container.appendChild(panel);
+  }
+
+  function useSolutionPrompt(el) {
+    const text = el.textContent.trim();
+    const inp = document.getElementById('msgInput');
+    inp.value = text;
+    inp.style.height = '';
+    inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
+    inp.focus();
+    inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ── Victory ───────────────────────────────────────────────────────────────
+
+  function showVictory(msg) {
+    const m = msg || challenge?.solved_message || 'Challenge complete!';
+    document.getElementById('victoryMsg').textContent = m;
+    document.getElementById('victoryOverlay').classList.remove('hidden');
+  }
+
+  function closeVictory() {
+    document.getElementById('victoryOverlay').classList.add('hidden');
+  }
+
+  init();
+</script>
+
+</body>
+</html>

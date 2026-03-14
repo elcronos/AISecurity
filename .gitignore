@@ -10,6 +10,7 @@
 !assets/*.png
 !assets/*.jpg
 !assets/*.jpeg
+!08_llm_attacks_multimodal/app/static/adversarial_patch.png
 
 # Jupyter checkpoints
 .ipynb_checkpoints/

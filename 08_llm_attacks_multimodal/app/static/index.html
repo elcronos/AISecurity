@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Security Lab — Multimodal LLM Attacks</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080d1a;
+      --surface:   #0f1729;
+      --border:    #1a2740;
+      --primary:   #00c8ff;
+      --primary-d: #0098c4;
+      --text:      #d4e0f0;
+      --muted:     #5a7090;
+      --green:     #22c55e;
+      --amber:     #f59e0b;
+      --red:       #ef4444;
+      --radius:    10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      border-bottom: 1px solid var(--border);
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), #0050aa);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .logo h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+    .logo p  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+    .module-tag {
+      background: rgba(0,200,255,.1);
+      border: 1px solid rgba(0,200,255,.25);
+      color: var(--primary);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 32px;
+    }
+
+    .hero { text-align: center; margin-bottom: 56px; }
+    .hero h2 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    .hero h2 span { color: var(--primary); }
+    .hero p {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color .2s, transform .2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-num {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+    .badge {
+      font-size: .68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      letter-spacing: .04em;
+    }
+    .badge-easy   { background: rgba(34,197,94,.12);  color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+    .badge-medium { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.25); }
+    .badge-hard   { background: rgba(239,68,68,.12);  color: var(--red);   border: 1px solid rgba(239,68,68,.25); }
+
+    .card-avatar { font-size: 2rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; color: #fff; }
+    .card-sub { font-size: .82rem; color: var(--primary); font-weight: 500; }
+    .card p {
+      font-size: .82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .image-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,200,255,.08);
+      border: 1px solid rgba(0,200,255,.2);
+      color: var(--primary);
+      font-size: .66rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: .04em;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+      font-size: .82rem;
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      transition: background .2s;
+      text-decoration: none;
+      align-self: flex-start;
+    }
+    .btn:hover { background: var(--primary-d); }
+
+    .loading {
+      text-align: center;
+      padding: 80px;
+      color: var(--muted);
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 32px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .78rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">👁️</div>
+    <div>
+      <h1>AI Security Lab</h1>
+      <p>Multimodal LLM Attack Challenges</p>
+    </div>
+  </div>
+  <span class="module-tag">MODULE 08</span>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Attack the <span>Multimodal Model</span></h2>
+    <p>
+      Each challenge simulates a real company chatbot that accepts both text and images.
+      Exploit the visual modality to bypass safety guardrails, inject instructions,
+      and extract secrets.
+    </p>
+  </div>
+
+  <p class="section-label">Choose a challenge</p>
+  <div class="grid" id="grid">
+    <div class="loading">Loading challenges…</div>
+  </div>
+</main>
+
+<footer>AI Security Series · Module 08 · Educational use only</footer>
+
+<script>
+  const DIFF_CLASS = { Easy: 'badge-easy', Medium: 'badge-medium', Hard: 'badge-hard' };
+
+  async function load() {
+    const res  = await fetch('/api/challenges');
+    const list = await res.json();
+    const grid = document.getElementById('grid');
+    grid.innerHTML = list.map(c => `
+      <a class="card" href="/challenge/${c.id}">
+        <div class="card-top">
+          <span class="card-num">CHALLENGE ${c.id}</span>
+          <span class="badge ${DIFF_CLASS[c.difficulty] || 'badge-easy'}">${c.difficulty}</span>
+        </div>
+        <div class="card-avatar">${c.avatar}</div>
+        <div>
+          <h3>${c.name}</h3>
+          <p class="card-sub">${c.subtitle}</p>
+        </div>
+        <p>${c.scenario.slice(0, 120)}…</p>
+        ${c.accepts_image ? '<span class="image-badge">📷 IMAGE UPLOAD</span>' : ''}
+        <span class="btn">Launch Challenge →</span>
+      </a>
+    `).join('');
+  }
+
+  load();
+</script>
+
+</body>
+</html>

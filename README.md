@@ -54,7 +54,7 @@ The series is divided into three parts:
 | # | Topic | Environment | Status |
 |---|-------|-------------|--------|
 | 07 | [Attacks on LLMs (Text-only)](#07-attacks-on-llms-text-only) | Docker + Local LLM | ✅ Available |
-| 08 | [Attacks on Multimodal LLMs](#08-attacks-on-multimodal-llms) | Docker + Local LLM | 🔜 Coming Soon |
+| 08 | [Attacks on Multimodal LLMs](#08-attacks-on-multimodal-llms) | Docker + Local LLM | ✅ Available |
 
 ---
 
@@ -241,26 +241,48 @@ docker compose up --build
 
 ### 08. Attacks on Multimodal LLMs
 
-> 🔜 *Coming Soon* — Docker environment included
+> **Notebook**: `08_llm_attacks_multimodal/` — Docker + local multimodal LLM (LLaVA via Ollama)
 
-Multimodal LLMs (GPT-4V, LLaVA, Gemini) accept both images and text, opening an entirely new attack surface: adversarial images designed to hijack the model's text output.
+Five interactive challenges, each simulating a company chatbot that accepts both text and images. Everything runs locally — no API keys, no cloud costs.
 
-**Planned topics:**
-- **Visual prompt injection**: embedding hidden instructions inside images
-- **Adversarial patches**: physical-world perturbations that fool vision-language models
-- **Cross-modal attacks**: using an adversarial image to override the text system prompt
-- **OCR-based injection**: hiding text instructions in image content (screenshots, documents)
+| # | Challenge | Attack Type | Difficulty |
+|---|-----------|-------------|------------|
+| 1 | Document Scan | OCR-based visual prompt injection — embed instructions in an image | Easy |
+| 2 | FigStep | Typographic jailbreak — render the prohibited request as image typography | Medium |
+| 3 | Authority Override | Cross-modal authority injection — forge an official directive image | Medium |
+| 4 | Phantom Patch | Adversarial patch bypass — use a pre-computed CLIP patch to confuse content moderation | Hard |
+| 5 | Slow Burn | Multi-turn visual manipulation — combine image framing with progressive context shift | Hard |
 
-**Interactive Docker environment:**
-Similar to Module 07 but the chatbot also accepts images. Challenges include:
-- Crafting images that contain hidden adversarial instructions
-- Bypassing image-content moderation
-- Multi-turn attack strategies combining text and image inputs
+**What you will learn:**
+- Why visual inputs bypass text-based safety filters (OCR-based prompt injection)
+- How the FigStep attack renders harmful text as image typography to evade input classifiers
+- Why authority markers in images are trivially spoofable (cross-modal authority injection)
+- How adversarial patches exploit non-robust neural network vision features (CLIP gradient ascent)
+- How multi-turn conversations accumulate context that progressively erodes model restrictions
+
+**Companion Jupyter notebook** (`adversarial_patch_generator.ipynb`):
+Generates a real CLIP gradient-based adversarial patch — the mathematical foundation of Challenge 4.
+Covers CLIP embedding space, gradient ascent optimisation, and defences (feature squeezing, adversarial training, randomised smoothing).
+
+**Key papers:**
+- Qi et al. (2024). *Visual Adversarial Examples Jailbreak Aligned Large Language Models* — [arXiv:2306.13213](https://arxiv.org/abs/2306.13213)
+- Gong et al. (2025). *FigStep: Jailbreaking Large Vision-Language Models via Scalable Typography-based Visual Prompts* — [arXiv:2311.05608](https://arxiv.org/abs/2311.05608)
+- Rahmatullaev et al. (2025). *Universal Adversarial Attack on Aligned Multimodal LLMs* — [arXiv:2502.07987](https://arxiv.org/abs/2502.07987)
+
+**Environment:**
+- **LLM**: `llava:7b` (~4.7 GB download, runs on CPU; GPU strongly recommended)
+- **Stack**: FastAPI app + Ollama inference server, orchestrated with Docker Compose
+- **Interface**: Browser-based chat UI with image upload (drag-and-drop) per-challenge hints and solution walkthroughs
+- **Port**: `http://localhost:8081` (offset from Module 07 so both can run simultaneously)
 
 ```bash
-# Launch the multimodal attack environment (coming soon)
-docker pull elcronos/aisecurity-llm-08
-docker run -p 8080:8080 elcronos/aisecurity-llm-08
+cd 08_llm_attacks_multimodal
+docker compose up --build
+# First run pulls llava:7b (~4.7 GB) — takes several minutes
+# Open http://localhost:8081 — upload images to attack the bot!
+
+# Optional: use a higher-quality model
+MODEL_NAME=llava-llama3:8b docker compose up
 ```
 
 ---
@@ -374,8 +396,19 @@ AISecurity/
 │           ├── index.html            # Challenge selection page
 │           ├── chat.html             # Challenge chat interface
 │           └── admin.html            # Knowledge base admin panel (Challenge 3)
-└── 08_llm_attacks_multimodal/        # coming soon
-    └── docker-compose.yml
+└── 08_llm_attacks_multimodal/
+    ├── docker-compose.yml
+    ├── adversarial_patch_generator.ipynb  # Companion: CLIP gradient-based patch generation
+    └── app/
+        ├── main.py                   # FastAPI app + 5 multimodal challenge configs
+        ├── image_utils.py            # Image validation, resize, base64 encoding
+        ├── Dockerfile
+        ├── entrypoint.sh             # Pulls LLaVA model on first start
+        ├── requirements.txt
+        └── static/
+            ├── index.html            # Challenge selection page
+            ├── chat.html             # Multimodal chat UI (image upload + text)
+            └── adversarial_patch.png # Pre-generated patch for Challenge 4
 ```
 
 ---
@@ -401,6 +434,10 @@ AISecurity/
 9. Elsayed, Goodfellow & Sohl-Dickstein (2019). *Adversarial Reprogramming of Neural Networks*. [arXiv:1806.11146](https://arxiv.org/abs/1806.11146)
 10. Perez & Ribeiro (2022). *Ignore Previous Prompt: Attack Techniques For Language Models*. [arXiv:2211.09527](https://arxiv.org/abs/2211.09527)
 11. Greshake et al. (2023). *Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. [arXiv:2302.12173](https://arxiv.org/abs/2302.12173)
+12. Radford et al. (2021). *Learning Transferable Visual Models From Natural Language Supervision* (CLIP). [arXiv:2103.00020](https://arxiv.org/abs/2103.00020)
+13. Qi et al. (2024). *Visual Adversarial Examples Jailbreak Aligned Large Language Models*. [arXiv:2306.13213](https://arxiv.org/abs/2306.13213)
+14. Gong et al. (2025). *FigStep: Jailbreaking Large Vision-Language Models via Scalable Typography-based Visual Prompts*. [arXiv:2311.05608](https://arxiv.org/abs/2311.05608)
+15. Rahmatullaev et al. (2025). *Universal Adversarial Attack on Aligned Multimodal LLMs*. [arXiv:2502.07987](https://arxiv.org/abs/2502.07987)
 
 ---
 
